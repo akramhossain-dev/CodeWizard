@@ -43,12 +43,39 @@ Server:
 
 ```bash
 cd server
-cp env.txt .env
+touch .env
+```
+
+`server/.env`:
+
+```env
+PORT=
+
+MONGODB_URI=
+SECRET_KEY=
+JWT_SECRET=
+ENCRYPTION_SECRET=
+ADMIN_SECRET_KEY=
+
+CLIENT_URL=
+
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SERVICE=
 ```
 
 Client (`client/.env.local`):
 
-```bash
+```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
