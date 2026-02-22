@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Private/auth routes
+Disallow: /dashboard/
+Disallow: /cp/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://codewizard.dev/sitemap.xml

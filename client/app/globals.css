@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-white dark:bg-slate-950 text-gray-900 dark:text-white;
+  }
+}
+
+@layer utilities {
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+  }
+
+  .blur-3xl {
+    filter: blur(64px);
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-in-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(156, 163, 175);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(107, 114, 128);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgb(51, 65, 85);
+}
