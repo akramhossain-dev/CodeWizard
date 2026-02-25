@@ -12,7 +12,9 @@ import {
     forgotPassword,
     resetPassword,
     googleSignin,
-    googleCompleteProfile
+    googleCompleteProfile,
+    githubSignin,
+    githubCompleteProfile
 } from '../controllers/auth.js';
 import { authenticate } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
@@ -28,6 +30,8 @@ router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/google-signin', googleSignin);
 router.post('/google-complete-profile', googleCompleteProfile);
+router.post('/github-signin', githubSignin);
+router.post('/github-complete-profile', githubCompleteProfile);
 router.get('/user/:username', getUserByUsername);
 
 // Protected routes (require authentication)

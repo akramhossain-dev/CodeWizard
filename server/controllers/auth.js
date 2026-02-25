@@ -352,6 +352,14 @@ export const signin = async (req, res) => {
             });
         }
 
+        // Check if user signed up with GitHub only (no password set)
+        if (user.authProvider === 'github' && !user.password) {
+            return res.status(400).json({
+                success: false,
+                message: 'This account uses GitHub sign-in. Please sign in with GitHub.'
+            });
+        }
+
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -1166,6 +1174,276 @@ export const googleCompleteProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Google complete profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error completing profile',
+            error: error.message
+        });
+    }
+};
+
+// ============================================================
+// GITHUB OAUTH
+// ============================================================
+
+// Helper: Exchange GitHub code for access token, then fetch user profile + email
+async function getGitHubUserFromCode(code) {
+    // 1. Exchange code for access token
+    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify({
+            client_id: process.env.GITHUB_CLIENT_ID,
+            client_secret: process.env.GITHUB_CLIENT_SECRET,
+            code,
+        }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (tokenData.error || !tokenData.access_token) {
+        throw new Error(tokenData.error_description || 'Failed to exchange GitHub code');
+    }
+
+    const accessToken = tokenData.access_token;
+
+    // 2. Fetch user profile
+    const userRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+    });
+    if (!userRes.ok) throw new Error('Failed to fetch GitHub user profile');
+    const profile = await userRes.json();
+
+    // 3. Fetch primary verified email (email may be private)
+    let email = profile.email;
+    if (!email) {
+        const emailsRes = await fetch('https://api.github.com/user/emails', {
+            headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+        });
+        if (emailsRes.ok) {
+            const emails = await emailsRes.json();
+            const primary = emails.find((e) => e.primary && e.verified);
+            if (primary) email = primary.email;
+        }
+    }
+
+    return {
+        githubId: String(profile.id),
+        email,
+        name: profile.name || profile.login,
+        login: profile.login,
+        avatar: profile.avatar_url || '',
+    };
+}
+
+// 14. GITHUB SIGN IN
+export const githubSignin = async (req, res) => {
+    try {
+        const { code } = req.body;
+
+        if (!code) {
+            return res.status(400).json({
+                success: false,
+                message: 'GitHub authorization code is required'
+            });
+        }
+
+        let ghUser;
+        try {
+            ghUser = await getGitHubUserFromCode(code);
+        } catch (err) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired GitHub code. Please try again.'
+            });
+        }
+
+        const { githubId, email, name, login, avatar } = ghUser;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not retrieve a verified email from your GitHub account. Please make sure you have a public or verified primary email on GitHub.'
+            });
+        }
+
+        // --- Account linking & no-duplicate logic ---
+
+        // 1. Check if a user with this githubId already exists
+        let user = await Auth.findOne({ githubId });
+
+        if (user) {
+            if (user.isBanned) {
+                return res.status(403).json({ success: false, message: 'Your account has been banned' });
+            }
+
+            user.lastLogin = new Date();
+            await user.save();
+
+            const token = generateToken(user._id);
+            const userResponse = user.toObject();
+            delete userResponse.password;
+
+            return res.status(200).json({
+                success: true,
+                message: 'Signed in with GitHub successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // 2. Check if a user with this email exists (account linking)
+        user = await Auth.findOne({ email: email.toLowerCase() });
+
+        if (user) {
+            if (user.isBanned) {
+                return res.status(403).json({ success: false, message: 'Your account has been banned' });
+            }
+
+            user.githubId = githubId;
+            if (!user.isVerified) user.isVerified = true;
+            if (!user.profilePicture && avatar) user.profilePicture = avatar;
+            user.lastLogin = new Date();
+            await user.save();
+
+            await EmailVerification.deleteMany({ userId: user._id });
+
+            const token = generateToken(user._id);
+            const userResponse = user.toObject();
+            delete userResponse.password;
+
+            return res.status(200).json({
+                success: true,
+                message: 'GitHub account linked and signed in successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // 3. New user — ask frontend to collect profile info
+        let baseUsername = login.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (baseUsername.length < 3) baseUsername = baseUsername + 'user';
+        let suggestedUsername = baseUsername;
+        let counter = 1;
+        while (await Auth.findOne({ username: suggestedUsername })) {
+            suggestedUsername = `${baseUsername}${counter}`;
+            counter++;
+        }
+
+        return res.status(200).json({
+            success: true,
+            needsProfile: true,
+            message: 'Please complete your profile to finish signing up',
+            githubData: {
+                name: name || login,
+                email,
+                picture: avatar,
+                suggestedUsername,
+                githubId,
+            }
+        });
+
+    } catch (error) {
+        console.error('GitHub signin error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error signing in with GitHub',
+            error: error.message
+        });
+    }
+};
+
+// 15. GITHUB COMPLETE PROFILE (for new GitHub users)
+export const githubCompleteProfile = async (req, res) => {
+    try {
+        const { githubId, email, name, picture, username, gender, dateOfBirth } = req.body;
+
+        if (!githubId || !email || !username || !gender || !dateOfBirth) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all required fields'
+            });
+        }
+
+        // Race condition protection
+        const existingGithubUser = await Auth.findOne({ githubId });
+        if (existingGithubUser) {
+            const token = generateToken(existingGithubUser._id);
+            const userResponse = existingGithubUser.toObject();
+            delete userResponse.password;
+            return res.status(200).json({
+                success: true,
+                message: 'Signed in with GitHub successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        const existingEmailUser = await Auth.findOne({ email: email.toLowerCase() });
+        if (existingEmailUser) {
+            existingEmailUser.githubId = githubId;
+            if (!existingEmailUser.isVerified) existingEmailUser.isVerified = true;
+            if (!existingEmailUser.profilePicture && picture) existingEmailUser.profilePicture = picture;
+            existingEmailUser.lastLogin = new Date();
+            await existingEmailUser.save();
+            await EmailVerification.deleteMany({ userId: existingEmailUser._id });
+
+            const token = generateToken(existingEmailUser._id);
+            const userResponse = existingEmailUser.toObject();
+            delete userResponse.password;
+            return res.status(200).json({
+                success: true,
+                message: 'GitHub account linked and signed in successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // Validate username
+        const sanitizedUsername = username.toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
+        if (sanitizedUsername.length < 3) {
+            return res.status(400).json({ success: false, message: 'Username must be at least 3 characters' });
+        }
+
+        const usernameTaken = await Auth.findOne({ username: sanitizedUsername });
+        if (usernameTaken) {
+            return res.status(400).json({ success: false, message: 'Username is already taken. Please choose another.' });
+        }
+
+        if (!['male', 'female', 'other'].includes(gender)) {
+            return res.status(400).json({ success: false, message: 'Please select a valid gender' });
+        }
+
+        const newUser = new Auth({
+            name: name || email.split('@')[0],
+            email: email.toLowerCase(),
+            username: sanitizedUsername,
+            githubId,
+            authProvider: 'github',
+            isVerified: true,
+            gender,
+            dateOfBirth: new Date(dateOfBirth),
+            profilePicture: picture || '',
+            lastLogin: new Date(),
+        });
+
+        await newUser.save();
+
+        const token = generateToken(newUser._id);
+        const userResponse = newUser.toObject();
+        delete userResponse.password;
+
+        return res.status(201).json({
+            success: true,
+            message: 'Account created with GitHub successfully',
+            token,
+            user: userResponse
+        });
+
+    } catch (error) {
+        console.error('GitHub complete profile error:', error);
         res.status(500).json({
             success: false,
             message: 'Error completing profile',

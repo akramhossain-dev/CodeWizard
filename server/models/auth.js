@@ -26,11 +26,13 @@ const authSchema = new mongoose.Schema(
 
     authProvider: {
       type: String,
-      enum: ["local", "google"],
+      enum: ["local", "google", "github"],
       default: "local",
     },
 
     googleId: { type: String, sparse: true, unique: true },
+
+    githubId: { type: String, sparse: true, unique: true },
 
     isBanned: { type: Boolean, default: false },
 
