@@ -9,6 +9,7 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
 
@@ -343,6 +344,14 @@ export const signin = async (req, res) => {
             });
         }
 
+        // Check if user signed up with Google only (no password set)
+        if (user.authProvider === 'google' && !user.password) {
+            return res.status(400).json({
+                success: false,
+                message: 'This account uses Google sign-in. Please sign in with Google.'
+            });
+        }
+
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -562,6 +571,25 @@ export const changePassword = async (req, res) => {
 
         // Get user with password
         const user = await Auth.findById(req.user._id);
+
+        // If user signed up via Google and has no password, allow setting one
+        if (user.authProvider === 'google' && !user.password) {
+            if (!newPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide a new password'
+                });
+            }
+            const hashedPassword = await bcrypt.hash(newPassword, 12);
+            user.password = hashedPassword;
+            user.authProvider = 'local'; // Now they have both local + google
+            await user.save();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Password set successfully'
+            });
+        }
 
         // Verify current password
         const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
@@ -867,6 +895,280 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error resetting password',
+            error: error.message
+        });
+    }
+};
+
+// 12. GOOGLE SIGN IN (ID Token verification)
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+export const googleSignin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                success: false,
+                message: 'Google credential is required'
+            });
+        }
+
+        // Verify the Google ID token
+        let ticket;
+        try {
+            ticket = await googleClient.verifyIdToken({
+                idToken: credential,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+        } catch (err) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid Google token'
+            });
+        }
+
+        const payload = ticket.getPayload();
+        const { sub: googleId, email, name, picture, email_verified } = payload;
+
+        if (!email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Google email is not verified'
+            });
+        }
+
+        // --- Account linking & no-duplicate logic ---
+
+        // 1. Check if a user with this googleId already exists (returning Google user)
+        let user = await Auth.findOne({ googleId });
+
+        if (user) {
+            // Existing Google-linked user — just sign them in
+            if (user.isBanned) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your account has been banned'
+                });
+            }
+
+            user.lastLogin = new Date();
+            await user.save();
+
+            const token = generateToken(user._id);
+            const userResponse = user.toObject();
+            delete userResponse.password;
+
+            return res.status(200).json({
+                success: true,
+                message: 'Signed in with Google successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // 2. Check if a user with this email exists (account linking)
+        user = await Auth.findOne({ email });
+
+        if (user) {
+            // Link Google account to existing local user
+            if (user.isBanned) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Your account has been banned'
+                });
+            }
+
+            user.googleId = googleId;
+            if (!user.isVerified) {
+                user.isVerified = true; // Google email is verified
+            }
+            if (!user.profilePicture && picture) {
+                user.profilePicture = picture;
+            }
+            user.lastLogin = new Date();
+            await user.save();
+
+            // Clean up any pending email verifications
+            await EmailVerification.deleteMany({ userId: user._id });
+
+            const token = generateToken(user._id);
+            const userResponse = user.toObject();
+            delete userResponse.password;
+
+            return res.status(200).json({
+                success: true,
+                message: 'Google account linked and signed in successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // 3. No existing user — ask frontend to collect profile info
+        // Generate a suggested username from the email prefix
+        let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (baseUsername.length < 3) {
+            baseUsername = baseUsername + 'user';
+        }
+        let suggestedUsername = baseUsername;
+        let counter = 1;
+        while (await Auth.findOne({ username: suggestedUsername })) {
+            suggestedUsername = `${baseUsername}${counter}`;
+            counter++;
+        }
+
+        return res.status(200).json({
+            success: true,
+            needsProfile: true,
+            message: 'Please complete your profile to finish signing up',
+            googleData: {
+                name: name || email.split('@')[0],
+                email,
+                picture: picture || '',
+                suggestedUsername,
+            }
+        });
+
+    } catch (error) {
+        console.error('Google signin error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error signing in with Google',
+            error: error.message
+        });
+    }
+};
+
+// 13. GOOGLE COMPLETE PROFILE (for new Google users)
+export const googleCompleteProfile = async (req, res) => {
+    try {
+        const { credential, username, gender, dateOfBirth } = req.body;
+
+        if (!credential || !username || !gender || !dateOfBirth) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide all required fields'
+            });
+        }
+
+        // Verify the Google ID token again for security
+        let ticket;
+        try {
+            ticket = await googleClient.verifyIdToken({
+                idToken: credential,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+        } catch (err) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired Google token. Please try again.'
+            });
+        }
+
+        const payload = ticket.getPayload();
+        const { sub: googleId, email, name, picture, email_verified } = payload;
+
+        if (!email_verified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Google email is not verified'
+            });
+        }
+
+        // Check again for duplicates (race condition protection)
+        const existingGoogleUser = await Auth.findOne({ googleId });
+        if (existingGoogleUser) {
+            // Already created — just sign them in
+            const token = generateToken(existingGoogleUser._id);
+            const userResponse = existingGoogleUser.toObject();
+            delete userResponse.password;
+            return res.status(200).json({
+                success: true,
+                message: 'Signed in with Google successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        const existingEmailUser = await Auth.findOne({ email });
+        if (existingEmailUser) {
+            // Link and sign in
+            existingEmailUser.googleId = googleId;
+            if (!existingEmailUser.isVerified) existingEmailUser.isVerified = true;
+            if (!existingEmailUser.profilePicture && picture) existingEmailUser.profilePicture = picture;
+            existingEmailUser.lastLogin = new Date();
+            await existingEmailUser.save();
+            await EmailVerification.deleteMany({ userId: existingEmailUser._id });
+
+            const token = generateToken(existingEmailUser._id);
+            const userResponse = existingEmailUser.toObject();
+            delete userResponse.password;
+            return res.status(200).json({
+                success: true,
+                message: 'Google account linked and signed in successfully',
+                token,
+                user: userResponse
+            });
+        }
+
+        // Validate and sanitize username
+        const sanitizedUsername = username.toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
+        if (sanitizedUsername.length < 3) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username must be at least 3 characters'
+            });
+        }
+
+        // Check if username is taken
+        const usernameTaken = await Auth.findOne({ username: sanitizedUsername });
+        if (usernameTaken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username is already taken. Please choose another.'
+            });
+        }
+
+        // Validate gender
+        if (!['male', 'female', 'other'].includes(gender)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please select a valid gender'
+            });
+        }
+
+        // Create the new user with proper profile data
+        const newUser = new Auth({
+            name: name || email.split('@')[0],
+            email,
+            username: sanitizedUsername,
+            googleId,
+            authProvider: 'google',
+            isVerified: true,
+            gender,
+            dateOfBirth: new Date(dateOfBirth),
+            profilePicture: picture || '',
+            lastLogin: new Date(),
+        });
+
+        await newUser.save();
+
+        const token = generateToken(newUser._id);
+        const userResponse = newUser.toObject();
+        delete userResponse.password;
+
+        return res.status(201).json({
+            success: true,
+            message: 'Account created with Google successfully',
+            token,
+            user: userResponse
+        });
+
+    } catch (error) {
+        console.error('Google complete profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error completing profile',
             error: error.message
         });
     }

@@ -10,7 +10,9 @@ import {
     changePassword,
     resendVerification,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    googleSignin,
+    googleCompleteProfile
 } from '../controllers/auth.js';
 import { authenticate } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
@@ -24,6 +26,8 @@ router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerification);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.post('/google-signin', googleSignin);
+router.post('/google-complete-profile', googleCompleteProfile);
 router.get('/user/:username', getUserByUsername);
 
 // Protected routes (require authentication)

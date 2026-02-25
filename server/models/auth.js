@@ -12,7 +12,7 @@ const authSchema = new mongoose.Schema(
       trim: true,
     },
 
-    password: { type: String, required: true },
+    password: { type: String, required: function() { return this.authProvider === 'local'; } },
 
     username: {
       type: String,
@@ -23,6 +23,14 @@ const authSchema = new mongoose.Schema(
     },
 
     isVerified: { type: Boolean, default: false },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    googleId: { type: String, sparse: true, unique: true },
 
     isBanned: { type: Boolean, default: false },
 

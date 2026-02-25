@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Zap, User, CheckCircle, AlertCircle } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleAuthEnabled } from "@/components/GoogleOAuthWrapper";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -15,13 +17,35 @@ export default function RegisterPage() {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // No step/verification state needed
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+  const googleEnabled = useGoogleAuthEnabled();
+
+  // Google profile completion flow
+  const [googleProfileMode, setGoogleProfileMode] = useState(false);
+  const [googleCredential, setGoogleCredential] = useState("");
+  const [googleUserData, setGoogleUserData] = useState(null);
+
+  useEffect(() => {
+    if (searchParams.get("google") === "1") {
+      const credential = sessionStorage.getItem("google_credential");
+      const data = sessionStorage.getItem("google_data");
+      if (credential && data) {
+        const parsed = JSON.parse(data);
+        setGoogleProfileMode(true);
+        setGoogleCredential(credential);
+        setGoogleUserData(parsed);
+        setName(parsed.name || "");
+        setEmail(parsed.email || "");
+        setUsername(parsed.suggestedUsername || "");
+      }
+    }
+  }, [searchParams]);
 
   // Validate password strength
   const getPasswordStrength = (pwd) => {
@@ -78,6 +102,82 @@ export default function RegisterPage() {
 
   // No email verification handler needed
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google-signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (data.success && data.needsProfile) {
+        // New user — show profile completion form
+        setGoogleProfileMode(true);
+        setGoogleCredential(credentialResponse.credential);
+        setGoogleUserData(data.googleData);
+        setName(data.googleData.name || "");
+        setEmail(data.googleData.email || "");
+        setUsername(data.googleData.suggestedUsername || "");
+      } else if (data.success) {
+        // Existing user — sign in directly
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Google sign-up failed");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-up was unsuccessful. Please try again.");
+  };
+
+  // Complete Google profile
+  const handleGoogleCompleteProfile = async (e) => {
+    e.preventDefault();
+    if (!username || !gender || !dateOfBirth) {
+      setError("Please fill in all required fields");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google-complete-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          credential: googleCredential,
+          username,
+          gender,
+          dateOfBirth,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Clean up session storage
+        sessionStorage.removeItem("google_credential");
+        sessionStorage.removeItem("google_data");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Failed to complete profile");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 flex flex-col">
       <Navbar />
@@ -96,10 +196,10 @@ export default function RegisterPage() {
               <Zap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-              Join CodeWizard
+              {googleProfileMode ? "Complete Your Profile" : "Join CodeWizard"}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Start your coding journey today
+              {googleProfileMode ? "Just a few more details to get started" : "Start your coding journey today"}
             </p>
           </div>
 
@@ -122,8 +222,102 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {/* Google Profile Completion Form */}
+            {googleProfileMode && !success && (
+              <form className="space-y-4" onSubmit={handleGoogleCompleteProfile}>
+                {/* Google Account Info */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-2">
+                  <div className="flex items-center gap-3">
+                    {googleUserData?.picture && (
+                      <img src={googleUserData.picture} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{googleUserData?.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{googleUserData?.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Username Input */}
+                <div>
+                  <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Username <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                    <input
+                      id="username"
+                      name="username"
+                      type="text"
+                      placeholder="choose a username"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-900 dark:text-white transition-all duration-200"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Only lowercase letters, numbers, and underscores</p>
+                </div>
+
+                {/* Gender Input */}
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    required
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-900 dark:text-white transition-all duration-200"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                {/* Date of Birth Input */}
+                <div>
+                  <label htmlFor="dateOfBirth" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Date of Birth <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    required
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-900 dark:text-white transition-all duration-200"
+                  />
+                </div>
+
+                {/* Complete Profile Button */}
+                <button
+                  type="submit"
+                  disabled={loading || !username || !gender || !dateOfBirth}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 group mt-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Complete Sign Up</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
             {/* Registration Form */}
-            {!success && (
+            {!success && !googleProfileMode && (
               <form className="space-y-4" onSubmit={handleRegister}>
                 {/* Name Input */}
                 <div>
@@ -376,7 +570,7 @@ export default function RegisterPage() {
             )}
 
             {/* Login Link */}
-            {!success && (
+            {!success && !googleProfileMode && (
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Already have an account?{" "}
@@ -384,6 +578,34 @@ export default function RegisterPage() {
                     Sign in
                   </a>
                 </p>
+
+                {/* Google Sign Up */}
+                {googleEnabled && (
+                  <>
+                    <div className="relative my-5">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-3 bg-white dark:bg-slate-800/50 text-gray-500 dark:text-gray-400">
+                          Or sign up with
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        theme="outline"
+                        size="large"
+                        width="100%"
+                        text="signup_with"
+                        shape="rectangular"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

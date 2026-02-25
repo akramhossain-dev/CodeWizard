@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Mail, Lock, Eye, EyeOff, Github, ArrowRight, Zap } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleAuthEnabled } from "@/components/GoogleOAuthWrapper";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+  const googleEnabled = useGoogleAuthEnabled();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,6 +44,39 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google-signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (data.success && data.needsProfile) {
+        // New Google user — redirect to register to complete profile
+        sessionStorage.setItem("google_credential", credentialResponse.credential);
+        sessionStorage.setItem("google_data", JSON.stringify(data.googleData));
+        router.push("/register?google=1");
+      } else if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        router.push("/dashboard");
+      } else {
+        setError(data.message || "Google sign-in failed");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign-in was unsuccessful. Please try again.");
   };
 
   return (
@@ -175,6 +211,35 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            {/* Google Sign In */}
+            {googleEnabled && (
+              <>
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-3 bg-white dark:bg-slate-800/50 text-gray-500 dark:text-gray-400">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    width="100%"
+                    text="signin_with"
+                    shape="rectangular"
+                  />
+                </div>
+              </>
+            )}
 
           </div>
 

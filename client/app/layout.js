@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import GoogleOAuthWrapper from "@/components/GoogleOAuthWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -284,7 +285,9 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <GoogleOAuthWrapper>{children}</GoogleOAuthWrapper>
+      </body>
     </html>
   );
 }
