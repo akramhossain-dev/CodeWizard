@@ -51,4 +51,39 @@ export const runRateLimiter = createRateLimiter({
     message: 'Too many run attempts. Please try again in a minute.'
 });
 
+export const aiHintRateLimiter = createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 10,
+    keyPrefix: 'ai-hint',
+    message: 'AI hint limit reached. You can request up to 10 hints every 10 minutes.'
+});
+
+export const aiCodeReviewRateLimiter = createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 5,
+    keyPrefix: 'ai-review',
+    message: 'Code review limit reached. You can request up to 5 reviews every 10 minutes.'
+});
+
+export const aiExplainRateLimiter = createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 5,
+    keyPrefix: 'ai-explain',
+    message: 'Explanation limit reached. You can request up to 5 explanations every 10 minutes.'
+});
+
+export const aiDebugRateLimiter = createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 10,
+    keyPrefix: 'ai-debug',
+    message: 'Debug limit reached. You can request up to 10 debug analyses every 10 minutes.'
+});
+
+export const aiChatRateLimiter = createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 30,
+    keyPrefix: 'ai-chat',
+    message: 'Chat limit reached. You can send up to 30 messages every 10 minutes.'
+});
+
 export default createRateLimiter;

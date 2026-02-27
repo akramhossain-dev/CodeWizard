@@ -6,8 +6,13 @@ import {
   Code, Clock, Database, CheckCircle, XCircle, Lock, Tag,
   Play, Send, Loader, ArrowLeft, BookOpen, Lightbulb,
   AlertCircle, TrendingUp, Users, ChevronDown, ChevronUp,
-  Terminal, RefreshCw, CircleDot, Trophy
+  Terminal, RefreshCw, CircleDot, Trophy, Sparkles, ScanSearch, BookOpenCheck, Bug
 } from "lucide-react";
+import AiHintPanel from "@/components/dashboard/AiHintPanel";
+import AiCodeReviewPanel from "@/components/dashboard/AiCodeReviewPanel";
+import AiExplanationPanel from "@/components/dashboard/AiExplanationPanel";
+import AiDebugPanel from "@/components/dashboard/AiDebugPanel";
+import AiChatBot from "@/components/dashboard/AiChatBot";
 
 const VERDICT_STYLE = {
   "Accepted":            { text: "text-green-500",  bg: "bg-green-500/10",  border: "border-green-500/30",  icon: CheckCircle },
@@ -222,6 +227,7 @@ export default function ProblemDetailPage() {
   const diff = DIFF[problem.difficulty?.toLowerCase()] || DIFF.medium;
 
   return (
+    <>
     <div className="h-[calc(100dvh-5rem)] min-h-[calc(100vh-5rem)] flex flex-col">
 
       {/* ── TOP BAR ── */}
@@ -298,15 +304,19 @@ export default function ProblemDetailPage() {
         <div className={`${mobilePanel === "problem" ? "flex" : "hidden"} lg:flex w-full lg:w-1/2 flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111]`}>
 
           {/* Tabs */}
-          <div className="shrink-0 flex gap-1 px-4 pt-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d0d0d]">
+          <div className="shrink-0 flex gap-1 px-4 pt-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d0d0d] overflow-x-auto scrollbar-none">
             {[
               { key: "description", label: "Description", icon: BookOpen },
               { key: "hints",       label: "Hints",       icon: Lightbulb },
-            ].map(({ key, label, icon: Icon }) => (
+              { key: "ai",          label: "AI Hint",     icon: Sparkles },
+              { key: "review",      label: "Code Review", icon: ScanSearch },
+              { key: "debug",       label: "Debug",       icon: Bug, badge: submitResult && ["Wrong Answer", "Runtime Error", "Time Limit Exceeded", "Compilation Error"].includes(submitResult?.verdict) },
+              { key: "explain",     label: "Explain",     icon: BookOpenCheck, badge: isSolved },
+            ].map(({ key, label, icon: Icon, badge }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-xl transition-all ${
+                className={`relative flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-t-xl transition-all shrink-0 ${
                   activeTab === key
                     ? "bg-white dark:bg-[#111] text-blue-600 dark:text-blue-400 border-x border-t border-gray-200 dark:border-gray-800"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -314,6 +324,9 @@ export default function ProblemDetailPage() {
               >
                 <Icon className="w-4 h-4" />
                 {label}
+                {badge && activeTab !== key && (
+                  <span className="absolute top-1.5 right-1 w-2 h-2 bg-green-500 rounded-full" />
+                )}
               </button>
             ))}
           </div>
@@ -447,6 +460,48 @@ export default function ProblemDetailPage() {
                 )}
               </div>
             )}
+
+            {activeTab === "ai" && (
+              <div className="-m-6 h-[calc(100%+3rem)]">
+                <AiHintPanel
+                  problemId={problem._id}
+                  code={code}
+                  language={language}
+                />
+              </div>
+            )}
+
+            {activeTab === "review" && (
+              <div className="-m-6 h-[calc(100%+3rem)]">
+                <AiCodeReviewPanel
+                  problemId={problem._id}
+                  code={code}
+                  language={language}
+                />
+              </div>
+            )}
+
+            {activeTab === "debug" && (
+              <div className="-m-6 h-[calc(100%+3rem)]">
+                <AiDebugPanel
+                  problemId={problem._id}
+                  code={code}
+                  language={language}
+                  submitResult={submitResult}
+                />
+              </div>
+            )}
+
+            {activeTab === "explain" && (
+              <div className="-m-6 h-[calc(100%+3rem)]">
+                <AiExplanationPanel
+                  problemId={problem._id}
+                  code={code}
+                  language={language}
+                  isSolved={isSolved}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -566,6 +621,14 @@ export default function ProblemDetailPage() {
         </div>
       </div>
     </div>
+
+    <AiChatBot
+      problem={problem}
+      code={code}
+      language={language}
+      submitResult={submitResult}
+    />
+    </>
   );
 }
 

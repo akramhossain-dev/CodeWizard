@@ -17,6 +17,11 @@ import employeeRoutes from './api/employee.js';
 import submissionRoutes from './api/submission.js';
 import publicRoutes from './api/public.js';
 import contestRoutes from './api/contest.js';
+import aiHintRoutes from './api/aiHint.js';
+import aiAnalysisRoutes from './api/aiAnalysis.js';
+import aiDebugRoutes from './api/aiDebug.js';
+import aiChatRoutes from './api/aiChat.js';
+import aiTokenRoutes from './api/aiToken.js';
 
 dotenv.config();
 
@@ -54,6 +59,11 @@ app.use('/api/employee', employeeRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/contests', contestRoutes);
+app.use('/api/ai', aiHintRoutes);
+app.use('/api/ai', aiAnalysisRoutes);
+app.use('/api/ai', aiDebugRoutes);
+app.use('/api/ai', aiChatRoutes);
+app.use('/api/ai', aiTokenRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

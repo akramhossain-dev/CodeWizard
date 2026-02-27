@@ -7,6 +7,7 @@ import {
   ChevronDown, Bell, Settings, ExternalLink,
   Flame, Menu, X, Activity
 } from "lucide-react";
+import AiChatBot from "@/components/dashboard/AiChatBot";
 
 const navLinks = [
   { href: "/dashboard",          label: "Home",     icon: Home },
@@ -310,6 +311,9 @@ export default function DashboardLayoutClient({ children }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {/* AI ChatBot — skip on problem detail pages (they render their own with problem context) */}
+      {!/^\/dashboard\/problems\/[^/]+$/.test(pathname) && <AiChatBot />}
     </div>
   );
 }
