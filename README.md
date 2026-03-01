@@ -1,91 +1,44 @@
 # CodeWizard
 
-Full-stack coding practice and contest platform with:
-- `client/` - Next.js frontend (user app + control panel)
-- `server/` - Node.js/Express API + judge worker
+CodeWizard is a full-stack coding practice and contest platform.
 
-## Features
-- User authentication (signup/signin, email verification, password reset)
-- Problem solving with code submission and verdicts
+- `client/` - Next.js frontend (public pages, user dashboard, control panel)
+- `server/` - Express API, queue, and judge worker
+
+## Highlights
+- User auth with email verification, password reset, Google, and GitHub sign-in
+- Problem solving with code run/submit and verdict tracking
 - Contest participation and leaderboard
-- User dashboard (profile, submissions, progress)
 - Admin/employee control panel for problems, contests, users, and submissions
-- Sandboxed code execution with Docker + queue worker
+- AI tools (`hint`, `review`, `explain`, `debug`, `chat`) with token balance endpoints
+- Docker-based sandboxed execution through a queue worker
 
 ## Tech Stack
 - Frontend: Next.js 16, React 19, Tailwind CSS v4
 - Backend: Node.js, Express, MongoDB, Redis, BullMQ
-- Judge: Docker-based isolated execution
+- Judge: Docker containers
 
-## Repository Structure
-
-```text
-CodeWizard/
-  client/   # Frontend app
-  server/   # Backend API and worker
-```
-
-## Quick Start
-
-### 1. Clone and install dependencies
-
-```bash
-git clone https://github.com/akramhossain-dev/CodeWizard.git
-cd CodeWizard
-
-cd server && npm install
-cd ../client && npm install
-```
-
-### 2. Configure environment files
-
-Server:
-
-```bash
-cd server
-touch .env
-```
-
-`server/.env`:
-
-```env
-PORT=
-
-MONGODB_URI=
-SECRET_KEY=
-JWT_SECRET=
-ENCRYPTION_SECRET=
-ADMIN_SECRET_KEY=
-
-CLIENT_URL=
-
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-EMAIL_USER=
-EMAIL_PASSWORD=
-EMAIL_SERVICE=
-```
-
-Client (`client/.env.local`):
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 3. Start required services
+## Prerequisites
+- Node.js 20+
+- npm
 - MongoDB
 - Redis
 - Docker Engine
 
-### 4. Build judge image
+## Quick Start
+1. Install dependencies:
+
+```bash
+cd server && npm install
+cd ../client && npm install
+```
+
+2. Create env files:
+
+- `server/.env` (see `server/README.md` for full key list)
+- `client/.env.local` (see `client/README.md`)
+
+3. Build judge image:
 
 ```bash
 cd server/docker
@@ -93,32 +46,31 @@ chmod +x build.sh
 ./build.sh
 ```
 
-### 5. Run apps (3 terminals)
+4. Run in 3 terminals:
 
-Terminal 1 (API):
 ```bash
+# Terminal 1
 cd server
 npm run dev
 ```
 
-Terminal 2 (worker):
 ```bash
+# Terminal 2
 cd server
 node workers/submissionWorker.js
 ```
 
-Terminal 3 (frontend):
 ```bash
+# Terminal 3
 cd client
 npm run dev
 ```
 
 ## Local URLs
 - Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:8000`
+- Backend: `http://localhost:8000`
 
 ## Scripts
-
 Server:
 - `npm run dev`
 - `npm start`
@@ -130,27 +82,18 @@ Client:
 - `npm run start`
 - `npm run lint`
 
-## API Modules
-Backend routes are grouped under:
-- `/api/auth`
-- `/api/problems`
-- `/api/submissions`
-- `/api/contests`
-- `/api/public`
-- `/api/admin`
-- `/api/employee`
-
-## Documentation
-- Frontend docs: `client/README.md`
-- Backend docs: `server/README.md`
-
-## License
-This project is licensed under the MIT License.
+## Docs
+- Frontend setup: `client/README.md`
+- Backend setup and API groups: `server/README.md`
 
 ## Troubleshooting
-- `Judge is temporarily unavailable`
-  - Ensure Docker is running and worker process is active.
-- CORS errors
-  - Ensure backend `CLIENT_URL` matches frontend origin.
-- `Failed to fetch` on frontend
-  - Verify `NEXT_PUBLIC_API_URL` and backend status.
+- `Judge unavailable` or `Internal Error` on submissions:
+  - Ensure Docker is running.
+  - Ensure worker (`node workers/submissionWorker.js`) is running.
+- CORS errors:
+  - Ensure `server/.env` `CLIENT_URL` matches frontend origin.
+- Frontend cannot reach API:
+  - Check `NEXT_PUBLIC_API_URL` in `client/.env.local`.
+
+## License
+MIT

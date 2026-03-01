@@ -1,142 +1,79 @@
-# CodeWizard Frontend (Next.js)
+# CodeWizard Frontend
 
-Frontend app for CodeWizard (problem solving platform) built with Next.js App Router.
+Next.js App Router frontend for CodeWizard.
 
-## Tech Stack
-- Next.js `16.1.6` (App Router)
-- React `19`
-- Tailwind CSS `v4` (via `@tailwindcss/postcss`)
+## Stack
+- Next.js `16.1.6`
+- React `19.2.3`
+- Tailwind CSS `v4`
 - ESLint `9`
 
 ## Prerequisites
-- Node.js `20+` (recommended for Next.js 16)
+- Node.js 20+
 - npm
-- Running backend server (default: `http://localhost:8000`)
+- Running backend API (default `http://localhost:8000`)
 
-## Environment Variables
+## Environment
 Create `client/.env.local`:
 
-```bash
+```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Optional (OAuth)
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+NEXT_PUBLIC_GITHUB_CLIENT_ID=
 ```
 
-Notes:
-- `NEXT_PUBLIC_API_URL` is used for all backend API calls.
-- `NEXT_PUBLIC_APP_URL` is used for SEO metadata/canonical URLs.
-
-## Install & Run
-From `client` directory:
+## Install and Run
+From `client/`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Frontend runs at:
-- `http://localhost:3000`
+Dev server: `http://localhost:3000`
 
-## Available Scripts
-- `npm run dev` - start development server
-- `npm run build` - production build
-- `npm run start` - run production build
-- `npm run lint` - run ESLint
+## Scripts
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
 
-## Main Route Groups
+## Key Areas
+- Public pages: landing, about/contact/careers, policies, leaderboard, discuss
+- User auth: login/register/verify/reset flows
+- User dashboard: problems, contests, submissions, profile
+- Control panel: admin/employee login and management pages (`/cp/*`)
 
-### Public Pages
-- `/` - landing page
-- `/problems` - public problem list
-- `/contests` - public contest list
-- `/leaderboard`
-- `/discuss`
-- `/about`, `/contact`, `/careers`
-- `/privacy`, `/terms`
-- `/[username]` - public user profile
+## API Layer
+Main client helpers:
+- `lib/api.js`
+- `lib/auth.js`
 
-### User Auth Pages
-- `/login`
-- `/register`
-- `/verify-email`
-- `/forgot-password`
-- `/reset-password`
+Clients in `lib/api.js`:
+- `apiClient` -> sends `admin_token` for control-panel routes
+- `userApiClient` -> sends `token` for user routes
 
-### User Dashboard
-- `/dashboard`
-- `/dashboard/problems`
-- `/dashboard/problems/[slug]`
-- `/dashboard/contests`
-- `/dashboard/contests/[slug]`
-- `/dashboard/submissions`
-- `/dashboard/profile`
+## Local Storage Keys
+- User app: `token`, `user`, `rememberMe`
+- Control panel: `admin_token`, `admin_user`
+- Theme: `solvesnest-theme`
 
-### Control Panel (Admin/Employee)
-- `/cp/login`
-- `/cp`
-- `/cp/problems`
-- `/cp/contests`
-- `/cp/submissions`
-- `/cp/users`
-- `/cp/employees`
-- `/cp/settings`
-
-## API Integration
-Shared API helpers:
-- `client/lib/api.js`
-- `client/lib/auth.js`
-
-Important clients:
-- `apiClient` -> uses admin/employee token from `localStorage` key `admin_token`
-- `userApiClient` -> uses user token from `localStorage` key `token`
-
-API modules inside `client/lib/api.js`:
-- `adminAPI`
-- `employeeAPI`
-- `problemsAPI`
-- `dashboardProblemsAPI`
-- `contestsAPI`
-
-## Auth Storage Keys
-User app keys:
-- `token`
-- `user`
-- `rememberMe`
-
-Control panel keys:
-- `admin_token`
-- `admin_user`
-
-Theme key:
-- `solvesnest-theme`
-
-## Project Structure (High Level)
-
+## Project Structure
 ```text
 client/
-  app/                 # Next.js App Router pages/layouts
-    cp/                # Admin/employee control panel
-    dashboard/         # End-user dashboard
-  components/          # Shared and feature UI components
-  lib/                 # API/auth/rating utilities
-  app/globals.css      # Global styles
+  app/          # App Router pages/layouts
+  components/   # Shared and feature components
+  lib/          # API and auth helpers
+  public/       # Static assets
 ```
 
-## Backend Dependency
-This frontend depends on the server API routes:
-- `/api/auth`
-- `/api/problems`
-- `/api/submissions`
-- `/api/public`
-- `/api/contests`
-- `/api/admin`
-- `/api/employee`
-
-If backend is down or `NEXT_PUBLIC_API_URL` is incorrect, pages that fetch data will fail.
+## Notes
+- Many dashboard/problem/contest pages require a valid auth token.
+- If backend URL is wrong, pages will fail with network/fetch errors.
 
 ## Troubleshooting
-- CORS error:
-  - ensure backend `CLIENT_URL` matches frontend origin (example: `http://localhost:3000`)
-- `Failed to fetch` in browser:
-  - verify backend is running at `NEXT_PUBLIC_API_URL`
-- Auth-protected dashboard/cp redirects:
-  - check localStorage token values and login flow
+- CORS issue: match backend `CLIENT_URL` with frontend origin.
+- OAuth issue: verify `NEXT_PUBLIC_GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GITHUB_CLIENT_ID` and server OAuth keys.
