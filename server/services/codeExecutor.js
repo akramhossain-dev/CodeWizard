@@ -41,7 +41,7 @@ const LANG_MIN_MEMORY = {
 // Language configurations
 const LANGUAGE_CONFIG = {
     javascript: {
-        image: 'node:20-alpine3.21',
+        image: 'node:20-alpine3.21@sha256:a818a65f636992e0e6cefba1d7bbe940207e2076fb34cdf73311f7ccef004602',
         extension: 'js',
         compileCmd: null,
         localCompileCmd: null,
@@ -50,7 +50,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     python: {
-        image: 'python:3.11-alpine3.21',
+        image: 'python:3.11-alpine3.21@sha256:fcc8a263650baf7da14c857bc837b3829d7b28bc12b5a7120d164220bc7c2810',
         extension: 'py',
         compileCmd: null,
         localCompileCmd: null,
@@ -59,7 +59,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     cpp: {
-        image: 'gcc:14-bookworm',
+        image: 'gcc:14-bookworm@sha256:a689e29bc3adf4663ef9a141d23081252764d1319c63f591a027bd6fd676f4c1',
         extension: 'cpp',
         compileCmd: (file, output) => `g++ -O2 -std=c++17 ${file} -o ${output}`,
         localCompileCmd: (file, output, dir) => ({
@@ -70,7 +70,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     c: {
-        image: 'gcc:14-bookworm',
+        image: 'gcc:14-bookworm@sha256:a689e29bc3adf4663ef9a141d23081252764d1319c63f591a027bd6fd676f4c1',
         extension: 'c',
         compileCmd: (file, output) => `gcc -O2 ${file} -o ${output}`,
         localCompileCmd: (file, output, dir) => ({
@@ -81,7 +81,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     java: {
-        image: 'eclipse-temurin:21-alpine',
+        image: 'eclipse-temurin:21-alpine@sha256:4ec2402e5ebb803add08b063b9e5e52e7c11961caaae1f490479d925753f0d92',
         extension: 'java',
         compileCmd: (file) => `javac ${file}`,
         localCompileCmd: (file, _output, dir) => ({

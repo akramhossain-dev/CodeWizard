@@ -38,21 +38,23 @@ jobs:
         run: npm ci
         working-directory: server
 
-      - name: Verify server starts (smoke check)
+      - name: Create CI .env (safe placeholder secrets)
         run: |
-          # Create minimal .env for startup check
           cat > server/.env << 'EOF'
           PORT=8000
           MONGODB_URI=mongodb://localhost/test
-          JWT_SECRET=ci-test-jwt-secret-not-for-production-use-only
-          ENCRYPTION_SECRET=ci-test-encryption-secret-not-for-production-use
-          ADMIN_SECRET_KEY=ci-test-admin-key
-          CRYPTO_PEPPER=ci-test-pepper-value-not-for-production
-          SECRET_KEY=ci-test-secret-key
+          JWT_SECRET=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ci
+          ENCRYPTION_SECRET=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ci
+          ADMIN_SECRET_KEY=00000000000000000000000000000000000000000000000000000000000000ci
+          CRYPTO_PEPPER=000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ci
+          SECRET_KEY=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ci
           CLIENT_URL=http://localhost:3000
           REDIS_HOST=localhost
           REDIS_PORT=6379
           NODE_ENV=test
+          ALLOW_UNSAFE_LOCAL_EXECUTION=false
+          JUDGE_WORKDIR=/tmp/codewizard-ci
+          WORKER_CONCURRENCY=1
           EOF
         shell: bash
 
@@ -87,11 +89,27 @@ jobs:
       - name: Lint client
         run: npm run lint
         working-directory: client
+        env:
+          # Disable telemetry in CI
+          NEXT_TELEMETRY_DISABLED: 1
 
       - name: Build client
         run: npm run build
         working-directory: client
         env:
+          NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_API_URL: http://localhost:8000
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-placeholder
           NEXT_PUBLIC_GITHUB_CLIENT_ID: ci-placeholder
+
+      - name: Docker Build — Client
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile
+          push: false
+          tags: codewizard-client:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8000
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=ci-placeholder
+            NEXT_PUBLIC_GITHUB_CLIENT_ID=ci-placeholder

@@ -10,6 +10,8 @@ import cookieParser from 'cookie-parser';
 import connectDB from './libs/db.js';
 import mongoose from 'mongoose';
 import Redis from 'ioredis';
+import logger from './libs/logger.js';
+import { guardCredentials } from './libs/credentialGuard.js';
 
 // Import routes
 import authRoutes from './api/auth.js';
@@ -26,6 +28,7 @@ import aiChatRoutes from './api/aiChat.js';
 import aiTokenRoutes from './api/aiToken.js';
 
 dotenv.config();
+guardCredentials(); // Block startup if credentials are missing or weak (L-3/L-6)
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -120,7 +123,7 @@ app.use((err, req, res, next) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    logger.info({ port: PORT, env: process.env.NODE_ENV }, '🚀 Server started');
 });
 
 export default app;
