@@ -125,7 +125,7 @@ export async function executeCode({ code, language, testCases, timeLimit, memory
     memoryLimit = Math.max(baseMemoryLimit, minMem);
 
     const sessionId = crypto.randomBytes(8).toString('hex');
-    const workDir = path.join('/tmp', `code-exec-${sessionId}`);
+    const workDir = path.join(process.env.JUDGE_WORKDIR || '/var/codewizard/exec', `code-exec-${sessionId}`);
     
     try {
         // Create temp directory
@@ -354,7 +354,7 @@ export async function runCodeTest({ code, language, input, timeLimit = 2000, mem
     memoryLimit = Math.max(baseMemoryLimit, minMem);
 
     const sessionId = crypto.randomBytes(8).toString('hex');
-    const workDir = path.join('/tmp', `code-test-${sessionId}`);
+    const workDir = path.join(process.env.JUDGE_WORKDIR || '/var/codewizard/exec', `code-test-${sessionId}`);
     
     try {
         await fs.mkdir(workDir, { recursive: true });

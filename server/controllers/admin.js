@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { encryptAES } from '../libs/crypto.js';
 import crypto from 'crypto';
+import { serverError } from '../libs/apiError.js';
 
 // Helper function to generate encrypted JWT token
 const generateToken = (userId) => {
@@ -74,11 +75,7 @@ export const adminSignup = async (req, res) => {
 
     } catch (error) {
         console.error('Admin signup error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating admin account',
-            error: error.message
-        });
+        return serverError(res, error, 'Error creating admin account');
     }
 };
 
@@ -138,11 +135,7 @@ export const adminSignin = async (req, res) => {
 
     } catch (error) {
         console.error('Admin signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in',
-            error: error.message
-        });
+        return serverError(res, error, 'Error signing in');
     }
 };
 
@@ -221,11 +214,7 @@ export const createEmployee = async (req, res) => {
 
     } catch (error) {
         console.error('Create employee error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating employee',
-            error: error.message
-        });
+        return serverError(res, error, 'Error creating employee');
     }
 };
 
@@ -261,11 +250,7 @@ export const getAllEmployees = async (req, res) => {
 
     } catch (error) {
         console.error('Get employees error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching employees',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching employees');
     }
 };
 
@@ -290,11 +275,7 @@ export const getEmployeeById = async (req, res) => {
 
     } catch (error) {
         console.error('Get employee error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching employee',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching employee');
     }
 };
 
@@ -331,11 +312,7 @@ export const updateEmployee = async (req, res) => {
 
     } catch (error) {
         console.error('Update employee error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating employee',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating employee');
     }
 };
 
@@ -360,11 +337,7 @@ export const deleteEmployee = async (req, res) => {
 
     } catch (error) {
         console.error('Delete employee error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting employee',
-            error: error.message
-        });
+        return serverError(res, error, 'Error deleting employee');
     }
 };
 
@@ -419,11 +392,7 @@ export const getDashboardStats = async (req, res) => {
 
     } catch (error) {
         console.error('Get dashboard stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching dashboard stats',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching dashboard stats');
     }
 };
 
@@ -468,11 +437,7 @@ export const getAllUsers = async (req, res) => {
 
     } catch (error) {
         console.error('Get users error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching users',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching users');
     }
 };
 
@@ -503,11 +468,7 @@ export const toggleUserBan = async (req, res) => {
 
     } catch (error) {
         console.error('Toggle user ban error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating user status',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating user status');
     }
 };
 
@@ -546,11 +507,7 @@ export const resetEmployeePassword = async (req, res) => {
 
     } catch (error) {
         console.error('Reset employee password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error resetting password',
-            error: error.message
-        });
+        return serverError(res, error, 'Error resetting password');
     }
 };
 
@@ -574,10 +531,6 @@ export const getAdminProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Get admin profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching profile');
     }
 };

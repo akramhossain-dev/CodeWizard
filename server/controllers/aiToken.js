@@ -1,4 +1,5 @@
 import AiToken from '../models/AiToken.js';
+import { serverError } from '../libs/apiError.js';
 
 // ── Config ───────────────────────────────────────────────────────────────────
 const CHAT_TOKEN_COST = 2;      // 2 tokens per chat message

@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { serverError } from '../libs/apiError.js';
 
 dotenv.config();
 
@@ -237,11 +238,7 @@ export const signup = async (req, res) => {
 
     } catch (error) {
         console.error('Signup error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating account',
-            error: error.message
-        });
+        return serverError(res, error, 'Error creating account');
     }
 };
 
@@ -306,11 +303,7 @@ export const verifyEmail = async (req, res) => {
 
     } catch (error) {
         console.error('Email verification error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error verifying email',
-            error: error.message
-        });
+        return serverError(res, error, 'Error verifying email');
     }
 };
 
@@ -399,11 +392,7 @@ export const signin = async (req, res) => {
 
     } catch (error) {
         console.error('Signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in',
-            error: error.message
-        });
+        return serverError(res, error, 'Error signing in');
     }
 };
 
@@ -428,11 +417,7 @@ export const getUserByUsername = async (req, res) => {
 
     } catch (error) {
         console.error('Get user error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching user',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching user');
     }
 };
 
@@ -455,11 +440,7 @@ export const getCurrentUser = async (req, res) => {
 
     } catch (error) {
         console.error('Get current user error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching user data',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching user data');
     }
 };
 
@@ -499,11 +480,7 @@ export const updateProfilePicture = async (req, res) => {
             await fs.unlink(req.file.path).catch(() => {});
         }
         console.error('Update profile picture error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating profile picture',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating profile picture');
     }
 };
 
@@ -550,11 +527,7 @@ export const updateProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Update profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating profile');
     }
 };
 
@@ -621,11 +594,7 @@ export const changePassword = async (req, res) => {
 
     } catch (error) {
         console.error('Change password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error changing password',
-            error: error.message
-        });
+        return serverError(res, error, 'Error changing password');
     }
 };
 
@@ -687,11 +656,7 @@ export const resendVerification = async (req, res) => {
 
     } catch (error) {
         console.error('Resend verification error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error sending verification email',
-            error: error.message
-        });
+        return serverError(res, error, 'Error sending verification email');
     }
 };
 
@@ -821,11 +786,7 @@ html: `
 
     } catch (error) {
         console.error('Forgot password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error processing password reset request',
-            error: error.message
-        });
+        return serverError(res, error, 'Error processing password reset request');
     }
 };
 
@@ -900,11 +861,7 @@ export const resetPassword = async (req, res) => {
 
     } catch (error) {
         console.error('Reset password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error resetting password',
-            error: error.message
-        });
+        return serverError(res, error, 'Error resetting password');
     }
 };
 
@@ -1039,11 +996,7 @@ export const googleSignin = async (req, res) => {
 
     } catch (error) {
         console.error('Google signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in with Google',
-            error: error.message
-        });
+        return serverError(res, error, 'Error signing in with Google');
     }
 };
 
@@ -1174,11 +1127,7 @@ export const googleCompleteProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Google complete profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error completing profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error completing profile');
     }
 };
 
@@ -1347,11 +1296,7 @@ export const githubSignin = async (req, res) => {
 
     } catch (error) {
         console.error('GitHub signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in with GitHub',
-            error: error.message
-        });
+        return serverError(res, error, 'Error signing in with GitHub');
     }
 };
 
@@ -1444,10 +1389,6 @@ export const githubCompleteProfile = async (req, res) => {
 
     } catch (error) {
         console.error('GitHub complete profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error completing profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error completing profile');
     }
 };

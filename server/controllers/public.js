@@ -3,6 +3,7 @@ import Problem from "../models/problem.js";
 import Contest from "../models/contest.js";
 import Submission from "../models/Submission.js";
 import ContestParticipation from "../models/ContestParticipation.js";
+import { serverError } from '../libs/apiError.js';
 
 // 1) Top Solvers
 export const getTopSolvers = async (req, res) => {
@@ -41,11 +42,7 @@ export const getTopSolvers = async (req, res) => {
     });
   } catch (error) {
     console.error("Get top solvers error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching top solvers",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching top solvers');
   }
 };
 
@@ -101,11 +98,7 @@ export const getExploreTopics = async (req, res) => {
     });
   } catch (error) {
     console.error("Get explore topics error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching topics",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching topics');
   }
 };
 
@@ -141,11 +134,7 @@ export const getFeaturedProblems = async (req, res) => {
     });
   } catch (error) {
     console.error("Get featured problems error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching featured problems",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching featured problems');
   }
 };
 
@@ -172,11 +161,7 @@ export const byTheNumbers = async (req, res) => {
     });
   } catch (error) {
     console.error("By the numbers error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching statistics",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching statistics');
   }
 }
 
@@ -311,11 +296,7 @@ export const getDiscussOverview = async (req, res) => {
     });
   } catch (error) {
     console.error("Discuss overview error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching discuss overview",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching discuss overview');
   }
 };
 
@@ -458,11 +439,7 @@ export const getContestsOverview = async (req, res) => {
     });
   } catch (error) {
     console.error("Contests overview error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching contests overview",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching contests overview');
   }
 };
 
@@ -584,10 +561,6 @@ export const getProblemsOverview = async (req, res) => {
     });
   } catch (error) {
     console.error("Problems overview error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching problems overview",
-      error: error.message,
-    });
+    return serverError(res, error, 'Error fetching problems overview');
   }
 };

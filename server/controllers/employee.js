@@ -2,6 +2,7 @@ import Employee from '../models/employee.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { encryptAES } from '../libs/crypto.js';
+import { serverError } from '../libs/apiError.js';
 
 // Helper function to generate encrypted JWT token
 const generateToken = (userId) => {
@@ -69,11 +70,7 @@ export const employeeSignin = async (req, res) => {
 
     } catch (error) {
         console.error('Employee signin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error signing in',
-            error: error.message
-        });
+        return serverError(res, error, 'Error signing in');
     }
 };
 
@@ -96,11 +93,7 @@ export const getEmployeeProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Get employee profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching profile');
     }
 };
 
@@ -140,11 +133,7 @@ export const updateEmployeeProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Update employee profile error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating profile',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating profile');
     }
 };
 
@@ -192,11 +181,7 @@ export const changeEmployeePassword = async (req, res) => {
 
     } catch (error) {
         console.error('Change employee password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error changing password',
-            error: error.message
-        });
+        return serverError(res, error, 'Error changing password');
     }
 };
 
@@ -227,10 +212,6 @@ export const getEmployeeStats = async (req, res) => {
 
     } catch (error) {
         console.error('Get employee stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching statistics');
     }
 };

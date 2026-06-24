@@ -1,4 +1,5 @@
 import { OpenRouter } from '@openrouter/sdk';
+import { serverError } from '../libs/apiError.js';
 
 // ── OpenRouter config ────────────────────────────────────────────────────────
 const COOLDOWN_MS = 10 * 60 * 1000;

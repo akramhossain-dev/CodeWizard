@@ -2,6 +2,7 @@ import Contest from '../models/contest.js';
 import ContestParticipation from '../models/ContestParticipation.js';
 import Submission from '../models/Submission.js';
 import Problem from '../models/problem.js';
+import { serverError } from '../libs/apiError.js';
 
 const toDate = (value) => {
     const date = new Date(value);
@@ -214,11 +215,7 @@ export const getAllContests = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all contests error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching contests',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching contests');
     }
 };
 
@@ -264,11 +261,7 @@ export const getContestBySlug = async (req, res) => {
         });
     } catch (error) {
         console.error('Get contest by slug error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching contest',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching contest');
     }
 };
 
@@ -316,11 +309,7 @@ export const joinContest = async (req, res) => {
         });
     } catch (error) {
         console.error('Join contest error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error joining contest',
-            error: error.message
-        });
+        return serverError(res, error, 'Error joining contest');
     }
 };
 
@@ -346,11 +335,7 @@ export const getMyJoinedContests = async (req, res) => {
         });
     } catch (error) {
         console.error('Get my contests error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching joined contests',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching joined contests');
     }
 };
 
@@ -382,11 +367,7 @@ export const getContestLeaderboard = async (req, res) => {
         });
     } catch (error) {
         console.error('Get contest leaderboard error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching leaderboard',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching leaderboard');
     }
 };
 
@@ -501,11 +482,7 @@ export const createContest = async (req, res) => {
                 message: error.message
             });
         }
-        res.status(500).json({
-            success: false,
-            message: 'Error creating contest',
-            error: error.message
-        });
+        return serverError(res, error, 'Error creating contest');
     }
 };
 
@@ -630,11 +607,7 @@ export const updateContest = async (req, res) => {
                 message: error.message
             });
         }
-        res.status(500).json({
-            success: false,
-            message: 'Error updating contest',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating contest');
     }
 };
 
@@ -668,11 +641,7 @@ export const toggleContestStatus = async (req, res) => {
         });
     } catch (error) {
         console.error('Toggle contest status error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating contest status',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating contest status');
     }
 };
 
@@ -698,11 +667,7 @@ export const deleteContest = async (req, res) => {
         });
     } catch (error) {
         console.error('Delete contest error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting contest',
-            error: error.message
-        });
+        return serverError(res, error, 'Error deleting contest');
     }
 };
 
@@ -754,10 +719,6 @@ export const getAllContestsAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error('Get admin contests error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching contests',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching contests');
     }
 };

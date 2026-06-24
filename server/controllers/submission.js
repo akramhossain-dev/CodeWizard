@@ -4,6 +4,7 @@ import Contest from '../models/contest.js';
 import ContestParticipation from '../models/ContestParticipation.js';
 import submissionQueue, { queueEvents } from '../config/queue.js';
 import { isJudgeExecutionAvailable } from '../services/codeExecutor.js';
+import { serverError } from '../libs/apiError.js';
 
 const buildJudgeTestCases = (problem) => {
     if (Array.isArray(problem?.testCases) && problem.testCases.length > 0) {
@@ -164,11 +165,7 @@ export const submitCode = async (req, res) => {
 
     } catch (error) {
         console.error('Submit code error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error submitting code',
-            error: error.message
-        });
+        return serverError(res, error, 'Error submitting code');
     }
 };
 
@@ -204,11 +201,7 @@ export const getSubmissionStatus = async (req, res) => {
 
     } catch (error) {
         console.error('Get submission error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching submission',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching submission');
     }
 };
 
@@ -254,11 +247,7 @@ export const getUserSubmissions = async (req, res) => {
 
     } catch (error) {
         console.error('Get user submissions error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching submissions',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching submissions');
     }
 };
 
@@ -302,11 +291,7 @@ export const getSubmissionById = async (req, res) => {
 
     } catch (error) {
         console.error('Get submission by ID error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching submission',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching submission');
     }
 };
 
@@ -344,11 +329,7 @@ export const getProblemSubmissions = async (req, res) => {
 
     } catch (error) {
         console.error('Get problem submissions error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching submissions',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching submissions');
     }
 };
 
@@ -391,11 +372,7 @@ export const getSubmissionStats = async (req, res) => {
 
     } catch (error) {
         console.error('Get submission stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching statistics');
     }
 };
 
@@ -473,11 +450,7 @@ export const runCode = async (req, res) => {
 
     } catch (error) {
         console.error('Run code error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error running code',
-            error: error.message
-        });
+        return serverError(res, error, 'Error running code');
     }
 };
 
@@ -527,11 +500,7 @@ export const getAllSubmissionsAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error('Get all submissions (admin) error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching submissions',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching submissions');
     }
 };
 
@@ -569,10 +538,6 @@ export const getAllSubmissionStats = async (req, res) => {
 
     } catch (error) {
         console.error('Get all submission stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching statistics');
     }
 };

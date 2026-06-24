@@ -24,6 +24,12 @@ COPY . .
 # Create uploads directory with correct permissions
 RUN mkdir -p uploads && chown appuser:appgroup uploads
 
+# Create judge execution workdir (replaces /tmp for sandboxed code execution)
+RUN mkdir -p /var/codewizard/exec && chown appuser:appgroup /var/codewizard/exec
+
+# Ensure judge workdir env is set
+ENV JUDGE_WORKDIR=/var/codewizard/exec
+
 # Switch to non-root user
 USER appuser
 

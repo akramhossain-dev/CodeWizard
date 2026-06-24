@@ -12,7 +12,7 @@ import Redis from 'ioredis';
 import Submission from '../models/Submission.js';
 import { executeCode } from '../services/codeExecutor.js';
 import connectDB from '../libs/db.js';
-import { getRatingDelta, recomputeAllRanks } from '../libs/ranking.js';
+import { getRatingDelta, scheduleRankRecompute } from '../libs/ranking.js';
 
 // Connect to MongoDB before starting the worker
 await connectDB();
@@ -131,7 +131,9 @@ const submissionWorker = new Worker('code-submissions', async (job) => {
                     await Auth.findByIdAndUpdate(submission.userId, {
                         $inc: { rating: ratingDelta }
                     });
-                    await recomputeAllRanks();
+                    // Non-blocking: coalesces all accepted submissions into one
+                    // DB recompute per 2-minute window (avoids O(n) storm per submission)
+                    scheduleRankRecompute();
                 }
 
                 console.log(`✅ Submission ${submissionId} judged: ${result.verdict}`);

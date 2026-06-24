@@ -1,6 +1,7 @@
 import Problem from '../models/problem.js';
 import Submission from '../models/Submission.js';
 import { encryptAES } from '../libs/crypto.js';
+import { serverError } from '../libs/apiError.js';
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -89,11 +90,7 @@ export const getAllProblems = async (req, res) => {
 
     } catch (error) {
         console.error('Get all problems error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problems',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching problems');
     }
 };
 
@@ -128,11 +125,7 @@ export const getProblemBySlug = async (req, res) => {
 
     } catch (error) {
         console.error('Get problem error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problem',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching problem');
     }
 };
 
@@ -228,11 +221,7 @@ export const createProblem = async (req, res) => {
 
     } catch (error) {
         console.error('Create problem error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating problem',
-            error: error.message
-        });
+        return serverError(res, error, 'Error creating problem');
     }
 };
 
@@ -270,11 +259,7 @@ export const updateProblem = async (req, res) => {
 
     } catch (error) {
         console.error('Update problem error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating problem',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating problem');
     }
 };
 
@@ -299,11 +284,7 @@ export const deleteProblem = async (req, res) => {
 
     } catch (error) {
         console.error('Delete problem error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting problem',
-            error: error.message
-        });
+        return serverError(res, error, 'Error deleting problem');
     }
 };
 
@@ -337,11 +318,7 @@ export const toggleProblemStatus = async (req, res) => {
 
     } catch (error) {
         console.error('Toggle problem status error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating problem status',
-            error: error.message
-        });
+        return serverError(res, error, 'Error updating problem status');
     }
 };
 
@@ -385,11 +362,7 @@ export const getProblemStats = async (req, res) => {
 
     } catch (error) {
         console.error('Get problem stats error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching statistics',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching statistics');
     }
 };
 
@@ -428,11 +401,7 @@ export const getRandomProblem = async (req, res) => {
 
     } catch (error) {
         console.error('Get random problem error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching random problem',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching random problem');
     }
 };
 
@@ -499,11 +468,7 @@ export const getProblemsByTag = async (req, res) => {
 
     } catch (error) {
         console.error('Get problems by tag error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problems',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching problems');
     }
 };
 
@@ -521,11 +486,7 @@ export const getAllTags = async (req, res) => {
 
     } catch (error) {
         console.error('Get all tags error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching tags',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching tags');
     }
 };
 
@@ -592,10 +553,6 @@ export const getAllProblemsAdmin = async (req, res) => {
 
     } catch (error) {
         console.error('Get all problems admin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching problems',
-            error: error.message
-        });
+        return serverError(res, error, 'Error fetching problems');
     }
 };
