@@ -3,7 +3,18 @@ import crypto from 'crypto';
 const algorithm = 'aes-256-gcm';
 const ivLength = 16;
 const saltLength = 16;
-const pepper = 'server-only-secret-pepper_value_12345_!@#$%';
+
+// ── Lazy pepper getter ─────────────────────────────────────────────────────
+// MUST be a function — not a top-level constant — because in ESM all import
+// statements are hoisted before any code runs, so process.env is not yet
+// populated by dotenv.config() at module evaluation time.
+const getPepper = () => {
+  const p = process.env.CRYPTO_PEPPER;
+  if (!p) {
+    throw new Error('CRYPTO_PEPPER environment variable is not set. Cannot perform crypto operations.');
+  }
+  return p;
+};
 
 const pbkdf2Iterations = 200000;
 const keyLength = 32;
@@ -26,7 +37,7 @@ export const encryptAES = (plaintext, secret) => {
   const salt = crypto.randomBytes(saltLength);
   const timestamp = Date.now();
 
-  const combinedSecret = secret + pepper;
+  const combinedSecret = secret + getPepper();
 
   const key = crypto.pbkdf2Sync(combinedSecret, salt, pbkdf2Iterations, keyLength, digest);
 
@@ -76,7 +87,7 @@ export const decryptAES = (token, secret, maxAgeMs = 0) => {
     if (age > maxAgeMs) throw new Error('Token expired');
   }
 
-  const combinedSecret = secret + pepper;
+  const combinedSecret = secret + getPepper();
   const key = crypto.pbkdf2Sync(combinedSecret, salt, pbkdf2Iterations, keyLength, digest);
 
   const hmacVerify = crypto.createHmac('sha512', key)

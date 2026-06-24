@@ -1,0 +1,97 @@
+name: CI — Build & Lint
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ── Server checks ──────────────────────────────────────────────────────────
+  server-check:
+    name: Server — Lint & Docker Build
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Verify server starts (smoke check)
+        run: |
+          # Create minimal .env for startup check
+          cat > server/.env << 'EOF'
+          PORT=8000
+          MONGODB_URI=mongodb://localhost/test
+          JWT_SECRET=ci-test-jwt-secret-not-for-production-use-only
+          ENCRYPTION_SECRET=ci-test-encryption-secret-not-for-production-use
+          ADMIN_SECRET_KEY=ci-test-admin-key
+          CRYPTO_PEPPER=ci-test-pepper-value-not-for-production
+          SECRET_KEY=ci-test-secret-key
+          CLIENT_URL=http://localhost:3000
+          REDIS_HOST=localhost
+          REDIS_PORT=6379
+          NODE_ENV=test
+          EOF
+        shell: bash
+
+      - name: Docker Build — Server
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: false
+          tags: codewizard-server:ci
+
+  # ── Client checks ──────────────────────────────────────────────────────────
+  client-check:
+    name: Client — Lint & Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Lint client
+        run: npm run lint
+        working-directory: client
+
+      - name: Build client
+        run: npm run build
+        working-directory: client
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-placeholder
+          NEXT_PUBLIC_GITHUB_CLIENT_ID: ci-placeholder
