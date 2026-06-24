@@ -14,22 +14,46 @@ import { executeCode } from '../services/codeExecutor.js';
 import connectDB from '../libs/db.js';
 import { getRatingDelta, scheduleRankRecompute } from '../libs/ranking.js';
 
-// Connect to MongoDB before starting the worker
-await connectDB();
+// ── H-9 fix: connect with retry, never bare top-level await ───────────────
+const MAX_DB_RETRIES = 5;
+const DB_RETRY_DELAY_MS = 5000;
 
-// Redis connection
-const connection = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
-    maxRetriesPerRequest: null,
-    password: process.env.REDIS_PASSWORD || undefined
-});
+async function connectWithRetry() {
+    for (let attempt = 1; attempt <= MAX_DB_RETRIES; attempt++) {
+        try {
+            await connectDB();
+            return; // success
+        } catch (err) {
+            console.error(`[Worker] DB connect attempt ${attempt}/${MAX_DB_RETRIES} failed:`, err.message);
+            if (attempt === MAX_DB_RETRIES) {
+                console.error('[Worker] Could not connect to MongoDB. Exiting.');
+                process.exit(1);
+            }
+            await new Promise(r => setTimeout(r, DB_RETRY_DELAY_MS));
+        }
+    }
+}
 
-// Create worker
-const submissionWorker = new Worker('code-submissions', async (job) => {
-    const { submissionId, code, language, testCases, timeLimit, memoryLimit } = job.data;
-    
-    console.log(`🔄 Processing submission: ${submissionId}`);
+
+// ── Bootstrap the worker inside an async IIFE ─────────────────────────────
+(async () => {
+    // Establish DB connection with retry before anything else
+    await connectWithRetry();
+
+    // Redis connection
+    const connection = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT) || 6379,
+        maxRetriesPerRequest: null,
+        password: process.env.REDIS_PASSWORD || undefined
+    });
+
+    // Create worker
+    const submissionWorker = new Worker('code-submissions', async (job) => {
+        const { submissionId, code, language, testCases, timeLimit, memoryLimit } = job.data;
+        
+        console.log(`🔄 Processing submission: ${submissionId}`);
+
 
     try {
         // Update submission status to Running
@@ -166,16 +190,21 @@ const submissionWorker = new Worker('code-submissions', async (job) => {
 });
 
 // Event handlers
-submissionWorker.on('completed', (job) => {
-    console.log(`✅ Job ${job.id} completed`);
+    submissionWorker.on('completed', (job) => {
+        console.log(`✅ Job ${job.id} completed`);
+    });
+
+    submissionWorker.on('failed', (job, err) => {
+        console.error(`❌ Job ${job?.id} failed:`, err.message);
+    });
+
+    submissionWorker.on('error', (err) => {
+        console.error('Worker error:', err);
+    });
+
+    console.log('✅ Submission worker started and listening for jobs');
+})().catch(err => {
+    console.error('[Worker] Fatal startup error:', err);
+    process.exit(1);
 });
 
-submissionWorker.on('failed', (job, err) => {
-    console.error(`❌ Job ${job?.id} failed:`, err.message);
-});
-
-submissionWorker.on('error', (err) => {
-    console.error('Worker error:', err);
-});
-
-export default submissionWorker;

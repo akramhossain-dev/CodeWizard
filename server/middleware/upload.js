@@ -8,79 +8,79 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for file uploads
+// ── Storage engine ─────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, uploadsDir);
     },
     filename: function (req, file, cb) {
-        // Generate unique filename
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const extension = path.extname(file.originalname);
+        const extension = path.extname(file.originalname).toLowerCase();
         cb(null, file.fieldname + '-' + uniqueSuffix + extension);
     }
 });
 
-// File filter function
-const fileFilter = (req, file, cb) => {
-    // Define allowed file types
-    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/avi', 'video/mov'];
-    const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes];
+// ── File type filters ──────────────────────────────────────────────────────
+const imageOnlyFilter = (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error(`Invalid file type: ${file.mimetype}. Only JPEG, PNG, and WebP images are allowed.`), false);
+    }
+};
 
-    if (allowedTypes.includes(file.mimetype)) {
+const anyMediaFilter = (req, file, cb) => {
+    const allowed = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'video/mp4', 'video/webm', 'video/avi', 'video/mov'
+    ];
+    if (allowed.includes(file.mimetype)) {
         cb(null, true);
     } else {
         cb(new Error(`Invalid file type: ${file.mimetype}. Only images and videos are allowed.`), false);
     }
 };
 
-// Configure multer
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
+// ── Profile picture upload — 5 MB, images only, single file ───────────────
+export const uploadProfilePicture = multer({
+    storage,
+    fileFilter: imageOnlyFilter,
     limits: {
-        fileSize: 100 * 1024 * 1024, // 100MB limit
-        files: 100 // Maximum 100 files
+        fileSize: 5 * 1024 * 1024,  // 5 MB — prevents DoS via oversized images
+        files: 1
     }
 });
 
-// Error handling middleware for multer
-const handleMulterError = (error, req, res, next) => {
+// ── General media upload — 50 MB, images + video, up to 10 files ──────────
+// (kept for any future admin/content upload routes)
+export const upload = multer({
+    storage,
+    fileFilter: anyMediaFilter,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50 MB
+        files: 10
+    }
+});
+
+// ── Multer error handler middleware ────────────────────────────────────────
+export const handleMulterError = (error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         switch (error.code) {
             case 'LIMIT_FILE_SIZE':
-                return res.status(400).json({
-                    message: 'File too large',
-                    error: 'Maximum file size is 100MB'
-                });
+                return res.status(400).json({ success: false, message: 'File too large. Maximum size is 5 MB.' });
             case 'LIMIT_FILE_COUNT':
-                return res.status(400).json({
-                    message: 'Too many files',
-                    error: 'Maximum 100 files allowed'
-                });
+                return res.status(400).json({ success: false, message: 'Too many files uploaded.' });
             case 'LIMIT_UNEXPECTED_FILE':
-                return res.status(400).json({
-                    message: 'Unexpected file field',
-                    error: 'Invalid file field name'
-                });
+                return res.status(400).json({ success: false, message: 'Unexpected file field.' });
             default:
-                return res.status(400).json({
-                    message: 'File upload error',
-                    error: error.message
-                });
+                return res.status(400).json({ success: false, message: 'File upload error.' });
         }
     }
-    
-    if (error.message.includes('Invalid file type')) {
-        return res.status(400).json({
-            message: 'Invalid file type',
-            error: error.message
-        });
+    if (error?.message?.includes('Invalid file type')) {
+        return res.status(400).json({ success: false, message: error.message });
     }
-    
     next(error);
 };
 
 export default upload;
-export { upload, handleMulterError };

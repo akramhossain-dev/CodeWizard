@@ -207,6 +207,10 @@ export async function executeCode({ code, language, testCases, timeLimit, memory
 
                 if (DOCKER_AVAILABLE) {
                     const runCommand = config.runCmd(executableName);
+
+                    // H-8 fix: write input to a file — never interpolate user data into shell string
+                    await fs.writeFile(path.join(workDir, 'input.txt'), testCase.input);
+
                     const dockerRun = `docker run --rm \
                         --network none \
                         --memory=${memoryLimit}m \
@@ -222,7 +226,7 @@ export async function executeCode({ code, language, testCases, timeLimit, memory
                         -v ${workDir}:/workspace:ro \
                         -w /workspace \
                         ${config.image} \
-                        timeout ${safeTimeLimit / 1000}s sh -c "echo '${testCase.input.replace(/'/g, "'\\''")}' | ${runCommand}"`;
+                        timeout ${safeTimeLimit / 1000}s sh -c "< /workspace/input.txt ${runCommand}"`;
                     ({ stdout, stderr } = await execAsync(dockerRun, { timeout: safeTimeLimit + 2000, maxBuffer: 1024 * 1024 }));
                 } else {
                     // Direct local execution — pipe input via stdin
@@ -396,8 +400,12 @@ export async function runCodeTest({ code, language, input, timeLimit = 2000, mem
         let stdout, stderr;
         if (DOCKER_AVAILABLE) {
             const runCommand = config.runCmd(executableName);
+
+            // H-8 fix: write input to file — no user data in shell command string
+            await fs.writeFile(path.join(workDir, 'input.txt'), input);
+
             ({ stdout, stderr } = await execAsync(
-                `docker run --rm --network none --memory=${memoryLimit}m --cpus=1 -v ${workDir}:/workspace:ro -w /workspace ${config.image} timeout ${safeTimeLimit / 1000}s sh -c "echo '${input.replace(/'/g, "'\\''")}' | ${runCommand}"`,
+                `docker run --rm --network none --memory=${memoryLimit}m --cpus=1 -v ${workDir}:/workspace:ro -w /workspace ${config.image} timeout ${safeTimeLimit / 1000}s sh -c "< /workspace/input.txt ${runCommand}"`,
                 { timeout: safeTimeLimit + 2000, maxBuffer: 1024 * 1024 }
             ));
         } else {
