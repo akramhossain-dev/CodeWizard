@@ -102,6 +102,7 @@ export default function DashboardPage() {
             </div>
             <h1 className="text-3xl font-bold text-white">Dashboard</h1>
           </div>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <p className="text-gray-400 text-lg">Monitor your platform's performance and activity</p>
           <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
             <Clock className="w-4 h-4" />

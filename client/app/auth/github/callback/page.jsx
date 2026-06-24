@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function GitHubCallbackPage() {
@@ -13,6 +14,7 @@ export default function GitHubCallbackPage() {
     const flow = sessionStorage.getItem("github_flow") || "login"; // "login" or "register"
 
     if (!code) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate guard clause: sets error once on mount if OAuth code is missing
       setError("No authorization code received from GitHub.");
       return;
     }
@@ -57,12 +59,12 @@ export default function GitHubCallbackPage() {
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Authentication Failed</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <a
+          <Link
             href="/login"
             className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Back to Login
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="text-center">

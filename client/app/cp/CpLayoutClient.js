@@ -19,6 +19,7 @@ export default function CpLayoutClient({ children }) {
     } else if (pathname === '/cp/login' && isAuthenticated()) {
       router.push('/cp');
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate auth guard: sets loading false once route is validated
       setLoading(false);
     }
   }, [pathname, router]);

@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
+import Link from 'next/link';
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -15,6 +16,7 @@ function VerifyEmailContent() {
 
   // Ensure component is mounted on client
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration guard: fires once after mount to enable client-side rendering
     setIsClient(true);
   }, []);
 
@@ -40,6 +42,7 @@ function VerifyEmailContent() {
     const userId = searchParams.get("userId");
 
     if (!token || !userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guard clause: sets error state if OAuth params are missing
       setStatus("error");
       setMessage("Invalid verification link. Please check your email again.");
       return;
@@ -173,13 +176,13 @@ function VerifyEmailContent() {
                 Redirecting to login in <span className="font-bold text-blue-600 dark:text-blue-400">{countdown}</span> seconds...
               </div>
               {/* Action Button */}
-              <a
+              <Link
                 href="/login"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group w-full"
               >
                 <span>Go to Login</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
             </div>
           )}
 
@@ -216,6 +219,7 @@ function VerifyEmailContent() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1">•</span>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
                     <span>Make sure the link hasn't expired</span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -231,19 +235,19 @@ function VerifyEmailContent() {
 
               {/* Action Buttons */}
               <div className="space-y-2 pt-4">
-                <a
+                <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group w-full"
                 >
                   <span>Try Again</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3 border-2 border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-300 w-full"
                 >
                   <span>Go Home</span>
-                </a>
+                </Link>
               </div>
             </div>
           )}

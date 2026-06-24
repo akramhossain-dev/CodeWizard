@@ -385,6 +385,7 @@ export default function DashboardPage() {
             <Star className="w-10 h-10 text-amber-500 mx-auto mb-3" />
             <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">Daily Challenge</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
               Complete today's challenge to earn bonus points!
             </p>
             <button

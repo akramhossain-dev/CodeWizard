@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -603,13 +604,13 @@ export default function RegisterPage() {
                   />
                   <label htmlFor="terms" className="ml-2.5 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                     I agree to the{" "}
-                    <a href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                    <Link href="/terms" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                       Terms of Service
-                    </a>{" "}
+                    </Link>{" "}
                     and{" "}
-                    <a href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                    <Link href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                       Privacy Policy
-                    </a>
+                    </Link>
                   </label>
                 </div>
 
@@ -639,7 +640,7 @@ export default function RegisterPage() {
                 <CheckCircle className="w-10 h-10 mx-auto text-green-500 mb-4" />
                 <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Registration Successful!</h2>
                 <p className="text-gray-700 dark:text-gray-300 mb-4">Please check your email and click the verification link to activate your account.</p>
-                <a href="/login" className="inline-block mt-2 text-blue-600 dark:text-blue-400 hover:underline font-medium">Back to Login</a>
+                <Link href="/login" className="inline-block mt-2 text-blue-600 dark:text-blue-400 hover:underline font-medium">Back to Login</Link>
               </div>
             )}
 
@@ -648,9 +649,9 @@ export default function RegisterPage() {
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Already have an account?{" "}
-                  <a href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                  <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                     Sign in
-                  </a>
+                  </Link>
                 </p>
 
                 {/* Social Sign Up */}

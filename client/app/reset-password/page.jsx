@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useState } from "react";
+import Link from 'next/link';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Lock, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
@@ -124,7 +125,7 @@ function ResetPasswordContent() {
           )}
           {success && (
             <div className="mt-6 text-center">
-              <a href="/login" className="inline-block text-blue-600 dark:text-blue-400 hover:underline font-medium">Back to Login</a>
+              <Link href="/login" className="inline-block text-blue-600 dark:text-blue-400 hover:underline font-medium">Back to Login</Link>
             </div>
           )}
         </div>
