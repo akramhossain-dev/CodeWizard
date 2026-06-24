@@ -1,99 +1,74 @@
-# CodeWizard
+# 🧙‍♂️ CodeWizard
 
-CodeWizard is a full-stack coding practice and contest platform.
+CodeWizard is a production-hardened, full-stack programming practice and contest platform featuring real-time sandboxed code execution, programming tournaments, and automated AI assistance.
 
-- `client/` - Next.js frontend (public pages, user dashboard, control panel)
-- `server/` - Express API, queue, and judge worker
+---
 
-## Highlights
-- User auth with email verification, password reset, Google, and GitHub sign-in
-- Problem solving with code run/submit and verdict tracking
-- Contest participation and leaderboard
-- Admin/employee control panel for problems, contests, users, and submissions
-- AI tools (`hint`, `review`, `explain`, `debug`, `chat`) with token balance endpoints
-- Docker-based sandboxed execution through a queue worker
+## 🚀 Quick Links
+Explore the detailed platform documentation:
+- 📐 **[System Architecture](docs/architecture.md):** Client-server flow, judge worker architecture, and container sandbox design.
+- ⚙️ **[Setup & Deployment](docs/setup_guide.md):** Local installation guides, environment configurations, and Docker Compose scripts.
+- 🔌 **[API Endpoints](docs/api_endpoints.md):** Complete route references, request payloads, and rate limits.
+- 🛡️ **[Security & Hardening](docs/security_audit.md):** Protections against malicious code, rate-limiting, and credentials guard details.
 
-## Tech Stack
-- Frontend: Next.js 16, React 19, Tailwind CSS v4
-- Backend: Node.js, Express, MongoDB, Redis, BullMQ
-- Judge: Docker containers
+---
 
-## Prerequisites
-- Node.js 20+
-- npm
-- MongoDB
-- Redis
-- Docker Engine
+## ✨ Features
+- **Interactive Practice:** Solve algorithmic problems using C, C++, Python, Java, or JavaScript with instant compiler and test case feedback.
+- **Tournaments & Contests:** Create, schedule, and join live contests. Dynamic rankings calculate user score and leaderboards.
+- **AI-Powered Code Companion:** Instantly query AI assistants for debugging, line-by-line code reviews, hints, or complete logic explanations.
+- **Control Panel:** Admin and Employee portals for managing problems, submissions, test cases, and user accounts.
+- **Sandboxed Judging:** Submissions compile and run inside secure, network-disabled Alpine-based Docker containers.
 
-## Quick Start
-1. Install dependencies:
+---
 
+## 🛠️ Tech Stack
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Lucide Icons.
+- **Backend:** Node.js, Express.js, MongoDB (Mongoose), Redis (BullMQ).
+- **Execution Judge:** Docker Engine.
+- **Logging:** Pino (Structured JSON logging).
+
+---
+
+## 🚀 Local Development (Fast Track)
+
+1. **Build the Sandbox Judge:**
+   ```bash
+   cd server/docker
+   chmod +x build.sh
+   ./build.sh
+   ```
+
+2. **Configure Envs:**
+   Setup `server/.env` and `client/.env` following the [Setup Guide](docs/setup_guide.md).
+
+3. **Install and Boot:**
+   ```bash
+   # Terminal 1: Run Backend
+   cd server && npm install && npm run dev
+
+   # Terminal 2: Run Judge Worker
+   cd server && node workers/submissionWorker.js
+
+   # Terminal 3: Run Frontend
+   cd client && npm install && npm run dev
+   ```
+
+4. **Access:**
+   - **Frontend:** `http://localhost:3000`
+   - **Backend API:** `http://localhost:8000`
+   - **Control Panel:** `http://localhost:3000/cp`
+
+---
+
+## 🐳 Production Deployment
+
+Spin up the entire stack using Docker Compose:
 ```bash
-cd server && npm install
-cd ../client && npm install
+docker compose up --build -d
 ```
 
-2. Create env files:
+---
 
-- `server/.env` (see `server/README.md` for full key list)
-- `client/.env.local` (see `client/README.md`)
-
-3. Build judge image:
-
-```bash
-cd server/docker
-chmod +x build.sh
-./build.sh
-```
-
-4. Run in 3 terminals:
-
-```bash
-# Terminal 1
-cd server
-npm run dev
-```
-
-```bash
-# Terminal 2
-cd server
-node workers/submissionWorker.js
-```
-
-```bash
-# Terminal 3
-cd client
-npm run dev
-```
-
-## Local URLs
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-
-## Scripts
-Server:
-- `npm run dev`
-- `npm start`
-- `npm run migrate:rating-rank`
-
-Client:
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
-
-## Docs
-- Frontend setup: `client/README.md`
-- Backend setup and API groups: `server/README.md`
-
-## Troubleshooting
-- `Judge unavailable` or `Internal Error` on submissions:
-  - Ensure Docker is running.
-  - Ensure worker (`node workers/submissionWorker.js`) is running.
-- CORS errors:
-  - Ensure `server/.env` `CLIENT_URL` matches frontend origin.
-- Frontend cannot reach API:
-  - Check `NEXT_PUBLIC_API_URL` in `client/.env.local`.
-
-## License
-MIT
+## 📄 License
+Licensed under the [MIT License](LICENSE).
