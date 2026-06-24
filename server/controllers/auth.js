@@ -14,6 +14,21 @@ import { serverError } from '../libs/apiError.js';
 
 dotenv.config();
 
+
+// ── M-3: Set JWT as HttpOnly cookie (XSS-safe) ──────────────────────────
+// Token is also kept in the response body for backward compatibility with
+// the existing Next.js client, which can migrate to cookie-auth progressively.
+const setAuthCookie = (res, token) => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('authToken', token, {
+        httpOnly: true,                          // Not accessible via document.cookie
+        secure: isProduction,                    // HTTPS only in production
+        sameSite: isProduction ? 'strict' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,       // 7 days — matches JWT expiry
+        path: '/',
+    });
+};
+
 // Helper function to generate encrypted JWT token
 const generateToken = (userId) => {
     const jwtToken = jwt.sign(
@@ -383,6 +398,7 @@ export const signin = async (req, res) => {
         const userResponse = user.toObject();
         delete userResponse.password;
 
+        setAuthCookie(res, token);
         res.status(200).json({
             success: true,
             message: 'Signed in successfully',
@@ -543,10 +559,10 @@ export const changePassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        if (newPassword.length < 8) {
             return res.status(400).json({
                 success: false,
-                message: 'New password must be at least 6 characters'
+                message: 'New password must be at least 8 characters'
             });
         }
 
@@ -802,10 +818,10 @@ export const resetPassword = async (req, res) => {
             });
         }
 
-        if (newPassword.length < 6) {
+        if (newPassword.length < 8) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters'
+                message: 'Password must be at least 8 characters'
             });
         }
 
@@ -924,7 +940,8 @@ export const googleSignin = async (req, res) => {
             const userResponse = user.toObject();
             delete userResponse.password;
 
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Signed in with Google successfully',
                 token,
@@ -961,7 +978,8 @@ export const googleSignin = async (req, res) => {
             const userResponse = user.toObject();
             delete userResponse.password;
 
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Google account linked and signed in successfully',
                 token,
@@ -1043,7 +1061,8 @@ export const googleCompleteProfile = async (req, res) => {
             const token = generateToken(existingGoogleUser._id);
             const userResponse = existingGoogleUser.toObject();
             delete userResponse.password;
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Signed in with Google successfully',
                 token,
@@ -1064,7 +1083,8 @@ export const googleCompleteProfile = async (req, res) => {
             const token = generateToken(existingEmailUser._id);
             const userResponse = existingEmailUser.toObject();
             delete userResponse.password;
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Google account linked and signed in successfully',
                 token,
@@ -1235,7 +1255,8 @@ export const githubSignin = async (req, res) => {
             const userResponse = user.toObject();
             delete userResponse.password;
 
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Signed in with GitHub successfully',
                 token,
@@ -1263,7 +1284,8 @@ export const githubSignin = async (req, res) => {
             const userResponse = user.toObject();
             delete userResponse.password;
 
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'GitHub account linked and signed in successfully',
                 token,
@@ -1318,7 +1340,8 @@ export const githubCompleteProfile = async (req, res) => {
             const token = generateToken(existingGithubUser._id);
             const userResponse = existingGithubUser.toObject();
             delete userResponse.password;
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'Signed in with GitHub successfully',
                 token,
@@ -1338,7 +1361,8 @@ export const githubCompleteProfile = async (req, res) => {
             const token = generateToken(existingEmailUser._id);
             const userResponse = existingEmailUser.toObject();
             delete userResponse.password;
-            return res.status(200).json({
+            return setAuthCookie(res, token);
+        res.status(200).json({
                 success: true,
                 message: 'GitHub account linked and signed in successfully',
                 token,

@@ -24,8 +24,6 @@ export const checkEmployee = async (req, res, next) => {
         console.error('Check employee error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error verifying employee status',
-            error: error.message
-        });
+            message: 'Error verifying employee status'});
     }
 };

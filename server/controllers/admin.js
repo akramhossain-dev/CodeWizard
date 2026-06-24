@@ -478,10 +478,10 @@ export const resetEmployeePassword = async (req, res) => {
         const { id } = req.params;
         const { newPassword } = req.body;
 
-        if (!newPassword || newPassword.length < 6) {
+        if (!newPassword || newPassword.length < 8) {
             return res.status(400).json({
                 success: false,
-                message: 'Password must be at least 6 characters'
+                message: 'Password must be at least 8 characters'
             });
         }
 

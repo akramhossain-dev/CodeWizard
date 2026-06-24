@@ -30,8 +30,6 @@ export const checkAdminOrEmployee = async (req, res, next) => {
         console.error('Check admin or employee error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error verifying privileges',
-            error: error.message
-        });
+            message: 'Error verifying privileges'});
     }
 };

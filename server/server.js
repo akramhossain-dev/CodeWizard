@@ -56,12 +56,31 @@ const globalLimiter = rateLimit({
 // Connect to the database
 connectDB();
 
+// ── M-2: Strict CORS origin validation ───────────────────────────────────
+const allowedOrigin = process.env.CLIENT_URL;
+if (!allowedOrigin || allowedOrigin.includes('localhost')) {
+    if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️  WARNING: CLIENT_URL is localhost or missing in production. CORS may reject all browser requests.');
+    }
+}
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow server-to-server requests (no origin header)
+        if (!origin) return callback(null, true);
+        if (origin === allowedOrigin) return callback(null, true);
+        callback(new Error(`CORS: Origin '${origin}' is not allowed`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400, // Cache preflight for 24h
+};
+
 // ── Core Middleware ────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-}));
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight for all routes
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());

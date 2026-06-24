@@ -41,7 +41,7 @@ const LANG_MIN_MEMORY = {
 // Language configurations
 const LANGUAGE_CONFIG = {
     javascript: {
-        image: 'node:18-alpine',
+        image: 'node:20-alpine3.21',
         extension: 'js',
         compileCmd: null,
         localCompileCmd: null,
@@ -50,7 +50,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     python: {
-        image: 'python:3.11-alpine',
+        image: 'python:3.11-alpine3.21',
         extension: 'py',
         compileCmd: null,
         localCompileCmd: null,
@@ -59,7 +59,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     cpp: {
-        image: 'gcc:12',
+        image: 'gcc:14-bookworm',
         extension: 'cpp',
         compileCmd: (file, output) => `g++ -O2 -std=c++17 ${file} -o ${output}`,
         localCompileCmd: (file, output, dir) => ({
@@ -70,7 +70,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     c: {
-        image: 'gcc:12',
+        image: 'gcc:14-bookworm',
         extension: 'c',
         compileCmd: (file, output) => `gcc -O2 ${file} -o ${output}`,
         localCompileCmd: (file, output, dir) => ({
@@ -81,7 +81,7 @@ const LANGUAGE_CONFIG = {
         timeout: 10
     },
     java: {
-        image: 'eclipse-temurin:17-alpine',
+        image: 'eclipse-temurin:21-alpine',
         extension: 'java',
         compileCmd: (file) => `javac ${file}`,
         localCompileCmd: (file, _output, dir) => ({

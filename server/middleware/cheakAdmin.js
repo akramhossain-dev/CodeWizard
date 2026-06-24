@@ -23,8 +23,6 @@ export const checkAdmin = async (req, res, next) => {
         console.error('Check admin error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error verifying admin status',
-            error: error.message
-        });
+            message: 'Error verifying admin status'});
     }
 };

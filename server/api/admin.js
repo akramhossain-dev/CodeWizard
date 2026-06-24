@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import {
     adminSignup,
     adminSignin,
@@ -17,11 +18,30 @@ import { authenticate } from '../middleware/auth.js';
 import { checkAdmin } from '../middleware/cheakAdmin.js';
 import { checkAdminOrEmployee } from '../middleware/checkAdminOrEmployee.js';
 
+// ── M-4: Dedicated rate limiters for admin auth ────────────────────────────
+// These are intentionally very strict since a compromised admin account is
+// catastrophic. No Redis store needed — per-process is acceptable here.
+const adminSignupLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, message: 'Too many signup attempts. Please try again in 15 minutes.' },
+});
+
+const adminSigninLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, message: 'Too many signin attempts. Please try again in 15 minutes.' },
+});
+
 const router = express.Router();
 
-// Public routes (one-time setup)
-router.post('/signup', adminSignup);
-router.post('/signin', adminSignin);
+// ── Public routes (one-time setup) — rate limited ─────────────────────────
+router.post('/signup', adminSignupLimiter, adminSignup);
+router.post('/signin', adminSigninLimiter, adminSignin);
 
 // Protected routes - accessible by both admin and employee
 router.use(authenticate);

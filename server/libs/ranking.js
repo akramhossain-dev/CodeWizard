@@ -1,4 +1,5 @@
 import Auth from '../models/auth.js';
+import Redis from 'ioredis';
 
 export const DEFAULT_RATING = 0;
 
@@ -9,6 +10,53 @@ export const RATING_DELTA = {
 };
 
 export const getRatingDelta = (difficulty) => RATING_DELTA[difficulty] || 0;
+
+// ── Shared Redis client for distributed lock ───────────────────────────────
+// Lazily connects so ranking.js can be imported even without Redis running.
+let _rlRedis = null;
+const getRankRedis = () => {
+    if (!_rlRedis) {
+        _rlRedis = new Redis({
+            host: process.env.REDIS_HOST || 'localhost',
+            port: parseInt(process.env.REDIS_PORT) || 6379,
+            password: process.env.REDIS_PASSWORD || undefined,
+            maxRetriesPerRequest: null,
+            enableOfflineQueue: false,
+            lazyConnect: true,
+        });
+        _rlRedis.on('error', (err) => {
+            // Log but don't crash — rank recompute falls back gracefully
+            console.error('[Ranking Redis] Connection error:', err.message);
+        });
+    }
+    return _rlRedis;
+};
+
+// ── M-10: Distributed lock for rank recomputation ─────────────────────────
+// Prevents concurrent rank recomputation across multiple worker processes.
+// Uses Redis SET NX PX (atomic "set-if-not-exists with TTL").
+const RANK_LOCK_KEY  = 'lock:rank:recompute';
+const RANK_LOCK_TTL  = 90_000; // 90 seconds max for a full recompute
+
+async function acquireRankLock() {
+    try {
+        const redis = getRankRedis();
+        // Returns 'OK' if acquired, null if already locked by another process
+        const result = await redis.set(RANK_LOCK_KEY, '1', 'NX', 'PX', RANK_LOCK_TTL);
+        return result === 'OK';
+    } catch {
+        // If Redis is unavailable, fail open (allow recompute without lock)
+        return true;
+    }
+}
+
+async function releaseRankLock() {
+    try {
+        await getRankRedis().del(RANK_LOCK_KEY);
+    } catch {
+        // Ignore — TTL will expire the lock automatically
+    }
+}
 
 // ── Rank recomputation debounce ────────────────────────────────────────────
 // recomputeAllRanks() loads ALL users from MongoDB and bulk-updates them.
@@ -34,12 +82,21 @@ export const scheduleRankRecompute = () => {
         if (!_pendingRankRecompute) return;
         _pendingRankRecompute = false;
 
+        // M-10: Acquire distributed lock before recomputing
+        const locked = await acquireRankLock();
+        if (!locked) {
+            console.log('🔒 Rank recompute skipped — another process is already running it');
+            return;
+        }
+
         try {
             console.log('🏆 Running scheduled rank recomputation...');
             await recomputeAllRanks();
             console.log('✅ Rank recomputation complete');
         } catch (err) {
             console.error('❌ Rank recomputation failed:', err.message);
+        } finally {
+            await releaseRankLock();
         }
     }, RANK_RECOMPUTE_DEBOUNCE_MS);
 };
