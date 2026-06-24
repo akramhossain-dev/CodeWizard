@@ -1,14 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Zap, User, CheckCircle, AlertCircle, Github } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Zap, User, CheckCircle, AlertCircle, Github, Loader2 } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useGoogleAuthEnabled } from "@/components/GoogleOAuthWrapper";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -725,5 +725,24 @@ export default function RegisterPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center py-12 px-4">
+          <div className="w-full max-w-md bg-white dark:bg-slate-800/50 rounded-2xl px-8 py-12 border border-gray-200 dark:border-slate-700 text-center">
+            <Loader2 className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Loading registration form...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }

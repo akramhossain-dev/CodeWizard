@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -97,7 +97,7 @@ function ExampleBlock({ example, index }) {
   );
 }
 
-export default function ProblemDetailPage() {
+function ProblemDetailContent() {
   const { slug } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -650,6 +650,21 @@ export default function ProblemDetailPage() {
       submitResult={submitResult}
     />
     </>
+  );
+}
+
+export default function ProblemDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[60vh] flex items-center justify-center bg-[#fafafa] dark:bg-[#0a0a0a]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-[3px] border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-gray-400 font-semibold tracking-wide">Loading problem…</span>
+        </div>
+      </div>
+    }>
+      <ProblemDetailContent />
+    </Suspense>
   );
 }
 
