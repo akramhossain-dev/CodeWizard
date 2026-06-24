@@ -21,7 +21,7 @@ const getRankRedis = () => {
             port: parseInt(process.env.REDIS_PORT) || 6379,
             password: process.env.REDIS_PASSWORD || undefined,
             maxRetriesPerRequest: null,
-            enableOfflineQueue: false,
+            enableOfflineQueue: true,
             lazyConnect: true,
         });
         _rlRedis.on('error', (err) => {

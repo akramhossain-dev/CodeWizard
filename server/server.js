@@ -40,7 +40,7 @@ const rateLimitRedis = new Redis({
     port: parseInt(process.env.REDIS_PORT) || 6379,
     password: process.env.REDIS_PASSWORD || undefined,
     maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
+    enableOfflineQueue: true,
     lazyConnect: true,
 });
 
@@ -83,7 +83,7 @@ const corsOptions = {
 // ── Core Middleware ────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight for all routes
+app.options(/.*/, cors(corsOptions)); // Handle preflight for all routes
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());

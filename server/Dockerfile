@@ -13,6 +13,9 @@ FROM node:20-alpine AS runner
 # Security: run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+# Install docker CLI to communicate with host docker socket
+RUN apk add --no-cache docker-cli
+
 WORKDIR /app
 
 # Copy production node_modules from deps stage
@@ -38,7 +41,7 @@ EXPOSE 8000
 
 # Health check — verifies the API is responding
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD wget -qO- http://localhost:8000/ || exit 1
+    CMD wget -qO- http://127.0.0.1:8000/ || exit 1
 
 # Start the server in production mode
 ENV NODE_ENV=production

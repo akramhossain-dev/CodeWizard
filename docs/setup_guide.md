@@ -124,21 +124,24 @@ This builds an immutable image tagged `codewizard-judge:latest` containing runti
 
 To run the entire system (including MongoDB, Redis, API, and frontend) inside Docker containers:
 
-1. Build production bundles and startup containers:
+1. **Inject Build Arguments:**
+   Next.js builds statically at build time. Ensure your `client/.env` file is present in the build context or env variables are defined when building the image. 
+
+2. **Start Services:**
    ```bash
    docker compose up --build -d
    ```
 
-2. Verify that all services are healthy:
+3. **Verify Health:**
+   The `docker-compose.yml` mounts the `/var/run/docker.sock` to enable sandboxed code execution, installs `docker-cli` within the backend containers, and runs the containers as `user: "root"` to bypass permission constraints on `/var/run/docker.sock`.
+   
+   To verify that all services are healthy:
    ```bash
    docker compose ps
    ```
 
-3. View structured JSON logs:
-   ```bash
-   docker compose logs -f api
-   docker compose logs -f worker
-   ```
+4. **Loopback Health Checks:**
+   Docker health checks inside containers request `http://127.0.0.1:3000` and `http://127.0.0.1:8000` to prevent Alpine loopback IPv6 hostname lookup resolution issues.
 
 ---
 
@@ -146,4 +149,4 @@ To run the entire system (including MongoDB, Redis, API, and frontend) inside Do
 If `NODE_ENV=production` is set:
 - The backend will **crash immediately on startup** if the values in `.env` contain default placeholders (like `change_this` or `your_secret`).
 - It will also crash if any key's entropy check fails (must be 128+ characters long) to prevent weak cryptographic signatures.
-- Make sure to update `CLIENT_URL` to your production domain (e.g. `https://codewizard.com`) — starting the backend in production mode with a `localhost` CLIENT_URL will trigger a startup block.
+- **Local Testing Override:** Starting the backend in production mode with a `localhost` CLIENT_URL will trigger a startup block. To test production builds locally, add `ALLOW_LOCALHOST_IN_PRODUCTION=true` to your environment configurations.

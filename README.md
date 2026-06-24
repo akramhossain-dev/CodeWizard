@@ -19,12 +19,13 @@ Explore the detailed platform documentation:
 - **AI-Powered Code Companion:** Instantly query AI assistants for debugging, line-by-line code reviews, hints, or complete logic explanations.
 - **Control Panel:** Admin and Employee portals for managing problems, submissions, test cases, and user accounts.
 - **Sandboxed Judging:** Submissions compile and run inside secure, network-disabled Alpine-based Docker containers.
+- **Production-Ready Architecture:** Includes a full Docker Compose suite with automatic health checking, offline Redis queue handling, Express 5 compatibility, and persistent container socket access.
 
 ---
 
 ## 🛠️ Tech Stack
 - **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Lucide Icons.
-- **Backend:** Node.js, Express.js, MongoDB (Mongoose), Redis (BullMQ).
+- **Backend:** Node.js, Express.js (v5 compatible), MongoDB (Mongoose), Redis (BullMQ).
 - **Execution Judge:** Docker Engine.
 - **Logging:** Pino (Structured JSON logging).
 
@@ -61,11 +62,23 @@ Explore the detailed platform documentation:
 
 ---
 
-## 🐳 Production Deployment
+## 🐳 Production Deployment (Docker Compose)
 
 Spin up the entire stack using Docker Compose:
 ```bash
 docker compose up --build -d
+```
+
+### Checking Deployment Status
+Verify that all services are healthy and running:
+```bash
+docker compose ps
+```
+
+Monitor service logs:
+```bash
+docker compose logs -f server
+docker compose logs -f worker
 ```
 
 ---

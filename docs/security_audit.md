@@ -1,6 +1,6 @@
 # 🛡️ CodeWizard Security & Hardening Reference
 
-This document outlines the security mechanisms implemented to harden CodeWizard for a production environment. 
+This document outlines the security mechanisms implemented to harden CodeWizard for a production environment.
 
 ---
 
@@ -9,13 +9,15 @@ To prevent insecure configurations or leaked repository placeholders from reachi
 - **Entropy Enforcement:** Keys (`JWT_SECRET`, `ENCRYPTION_SECRET`, `ADMIN_SECRET_KEY`, `CRYPTO_PEPPER`) must be at least **128 characters long** when `NODE_ENV=production`.
 - **Known-Weak Pattern Block:** Startup will abort immediately if any credential contains default strings (e.g. `change_this`, `placeholder`, `your_secret`).
 - **Production Host Verification:** If `NODE_ENV=production` is active and the `CLIENT_URL` contains `localhost` or uses insecure `http://`, the server will log an error and call `process.exit(1)`.
+- **Staging / Local Testing Bypass:** You can override the production localhost/http blocker by setting the environment variable `ALLOW_LOCALHOST_IN_PRODUCTION=true`. This allows developer validation of production-grade packages locally.
 
 ---
 
 ## 🐳 2. Sandboxed Code Execution
 User-submitted code is highly untrusted and could contain malicious commands (e.g. infinite loops, fork bombs, disk scrapers, or network scans). The worker enforces isolation boundaries:
-- **Non-Root Execution:** Containers run under a low-privilege `USER appuser`.
-- **Network Isolation:** `--network none` blocks internet access entirely inside the container.
+- **Host Socket Access:** The backend and worker run with `docker-cli` installed and mount the host's `/var/run/docker.sock` to start containerized jobs. To ensure proper socket read/write permissions, the container processes run as `user: "root"`.
+- **Non-Root Execution inside Sandbox:** The sandboxed execution container (`codewizard-judge`) runs under a low-privilege `USER appuser` inside Docker.
+- **Network Isolation:** `--network none` blocks internet access entirely inside the code execution container.
 - **Read-Only Roots:** Filesystems are mounted read-only (`--read-only`) to prevent code from writing malware or system files.
 - **Binary Block in `/tmp`:** Mounted with `--tmpfs /tmp:rw,noexec,nosuid,size=10m` to prevent executing dynamically compiled binaries or script files inside `/tmp`.
 - **Resource Caps:** CPU execution time and memory (RAM limit: 256MB) are capped. Memory overflow triggers immediate SIGKILL, returning a standard `Runtime Error (OOM)`.
@@ -25,7 +27,7 @@ User-submitted code is highly untrusted and could contain malicious commands (e.
 ## 🍪 3. Cookie Hardening & Session Security
 JWTs are stored using secure cookie configurations across all local, Google, and GitHub login flows:
 - **`httpOnly`:** Prevents cross-site scripting (XSS) scripts from accessing the session token.
-- **`secure: true`:** Restricts cookies to HTTPS-only transmissions.
+- **`secure: true`:** Restricts cookies to HTTPS-only transmissions (or local overrides).
 - **`sameSite: strict`:** Protects against Cross-Site Request Forgery (CSRF) attacks by ensuring cookies are only sent for requests originating from the site's own domain.
 
 ---

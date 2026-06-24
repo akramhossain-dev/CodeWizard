@@ -78,7 +78,8 @@ export const guardCredentials = () => {
 
     // 5. Block localhost CLIENT_URL in production (L-6)
     const clientUrl = process.env.CLIENT_URL || '';
-    if (isProduction && (clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1') || !clientUrl.startsWith('https://'))) {
+    const allowLocalhost = process.env.ALLOW_LOCALHOST_IN_PRODUCTION === 'true';
+    if (isProduction && !allowLocalhost && (clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1') || !clientUrl.startsWith('https://'))) {
         errors.push(`CLIENT_URL must be an HTTPS production URL in production mode (current: "${clientUrl}")`);
     }
 
